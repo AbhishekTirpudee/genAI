@@ -1,17 +1,59 @@
-# Virtual environment
-venv/
-.venv/
-
-# Python cache
+# Python & Virtual Environments
 __pycache__/
 *.py[cod]
+*$py.class
+*.so
+.Python
+backend/.venv/
+.venv/
+env/
+venv/
+ENV/
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
 
-# Hugging Face / Streamlit local data
-.cache/
-.streamlit/secrets.toml
+# Testing & Pytest
+.pytest_cache/
+.coverage
+htmlcov/
+junit/
 
-# OS / editor
+# Node & Next.js
+frontend/node_modules/
+frontend/.next/
+frontend/out/
+node_modules/
+.next/
+
+# Environment Variables & Secrets
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+*.pem
+*.key
+
+# Operating System & IDEs
 .DS_Store
 Thumbs.db
 .vscode/
 .idea/
+*.swp
+*.swo
+
+# Docker
+.docker/
