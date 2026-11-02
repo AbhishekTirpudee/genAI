@@ -1,0 +1,476 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="ScholarMind AI - Advanced PDF-based RAG Academic Assistant. Upload lecture notes, research papers, and textbooks for cited answers, flashcards, and exam quizzes.">
+    <title>ScholarMind AI — Academic PDF RAG Assistant & Study Agent</title>
+    
+    <!-- Modern Typography: Outfit (Headings) & Inter (Body) & JetBrains Mono (Code/Citations) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    
+    <link rel="stylesheet" href="/static/index.css">
+</head>
+<body>
+    <div id="app-container" class="app-layout">
+        <!-- TOP NAVIGATION BAR -->
+        <header id="main-header" class="header-nav">
+            <div class="header-left">
+                <div class="brand-logo">
+                    <div class="logo-icon-pulse">
+                        <i class="fa-solid fa-graduation-cap"></i>
+                    </div>
+                    <div class="brand-text">
+                        <h1 class="brand-title">ScholarMind<span class="gradient-text">.AI</span></h1>
+                        <span class="brand-badge">Academic PDF RAG Agent</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="header-center">
+                <div id="engine-status-badge" class="status-indicator">
+                    <span class="status-dot"></span>
+                    <span id="status-engine-text">Initializing RAG Engine...</span>
+                </div>
+            </div>
+
+            <div class="header-right">
+                <button id="btn-quick-sample" class="btn btn-secondary btn-sm" title="Load bundled Computer Science & Machine Learning academic notes">
+                    <i class="fa-solid fa-wand-magic-sparkles"></i> Load Sample Notes
+                </button>
+                <button id="btn-open-settings" class="btn btn-ghost btn-sm" title="Configure AI Provider & Gemini API Key">
+                    <i class="fa-solid fa-gear"></i> Settings
+                </button>
+            </div>
+        </header>
+
+        <!-- MAIN WORKSPACE -->
+        <div class="workspace-body">
+            <!-- SIDEBAR: DOCUMENT REPOSITORY & CONTROLS -->
+            <aside id="sidebar-panel" class="sidebar">
+                <!-- Dropzone Section -->
+                <div class="sidebar-section">
+                    <div class="section-header">
+                        <span class="section-title"><i class="fa-solid fa-cloud-arrow-up"></i> Upload Notes</span>
+                        <span class="file-hint">PDF Only</span>
+                    </div>
+                    
+                    <div id="pdf-dropzone" class="dropzone-area">
+                        <input type="file" id="pdf-file-input" accept=".pdf" multiple class="file-input-hidden">
+                        <div class="dropzone-content">
+                            <i class="fa-solid fa-file-pdf dropzone-icon"></i>
+                            <p class="dropzone-text">Drag & drop academic PDFs here</p>
+                            <span class="dropzone-subtext">or <button type="button" id="btn-browse-files" class="browse-link">browse files</button></span>
+                        </div>
+                        <div id="upload-progress-container" class="upload-progress hidden">
+                            <div class="progress-bar-track">
+                                <div id="upload-progress-fill" class="progress-bar-fill"></div>
+                            </div>
+                            <span id="upload-progress-text" class="progress-label">Extracting & indexing chunks...</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Navigation Tabs (Study Modes) -->
+                <div class="sidebar-section">
+                    <span class="section-title"><i class="fa-solid fa-compass"></i> Study Agent Modes</span>
+                    <nav class="mode-navigation">
+                        <button id="tab-btn-chat" class="mode-tab-btn active" data-tab="chat">
+                            <i class="fa-solid fa-comments"></i>
+                            <span>Academic Chat</span>
+                            <span class="tab-indicator"></span>
+                        </button>
+                        <button id="tab-btn-flashcards" class="mode-tab-btn" data-tab="flashcards">
+                            <i class="fa-solid fa-layer-group"></i>
+                            <span>Study Flashcards</span>
+                            <span class="tab-badge" id="badge-flashcards">Active</span>
+                        </button>
+                        <button id="tab-btn-quiz" class="mode-tab-btn" data-tab="quiz">
+                            <i class="fa-solid fa-circle-question"></i>
+                            <span>Practice Exam Quiz</span>
+                            <span class="tab-badge" id="badge-quiz">Ready</span>
+                        </button>
+                        <button id="tab-btn-summary" class="mode-tab-btn" data-tab="summary">
+                            <i class="fa-solid fa-book-bookmark"></i>
+                            <span>Executive Summary</span>
+                        </button>
+                        <button id="tab-btn-chunks" class="mode-tab-btn" data-tab="chunks">
+                            <i class="fa-solid fa-cubes-stacked"></i>
+                            <span>Chunk Explorer</span>
+                        </button>
+                    </nav>
+                </div>
+
+                <!-- Active Documents List -->
+                <div class="sidebar-section docs-section">
+                    <div class="section-header">
+                        <span class="section-title"><i class="fa-solid fa-folder-open"></i> Indexed Documents</span>
+                        <button id="btn-clear-all-docs" class="btn-icon-danger" title="Clear all documents">
+                            <i class="fa-solid fa-trash-can"></i>
+                        </button>
+                    </div>
+
+                    <div id="document-list-container" class="document-list">
+                        <!-- Populated dynamically via JS -->
+                        <div class="doc-empty-state">
+                            <i class="fa-regular fa-file"></i>
+                            <p>No documents uploaded yet.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Knowledge Base Stats -->
+                <div class="sidebar-footer">
+                    <div class="stat-pill">
+                        <i class="fa-regular fa-file-lines"></i>
+                        <div>
+                            <span id="stat-total-pages" class="stat-value">0</span>
+                            <span class="stat-label">Pages</span>
+                        </div>
+                    </div>
+                    <div class="stat-pill">
+                        <i class="fa-solid fa-puzzle-piece"></i>
+                        <div>
+                            <span id="stat-total-chunks" class="stat-value">0</span>
+                            <span class="stat-label">Chunks</span>
+                        </div>
+                    </div>
+                    <div class="stat-pill">
+                        <i class="fa-regular fa-clock"></i>
+                        <div>
+                            <span id="stat-read-time" class="stat-value">0m</span>
+                            <span class="stat-label">Est. Read</span>
+                        </div>
+                    </div>
+                </div>
+            </aside>
+
+            <!-- MAIN VIEWPORT -->
+            <main id="main-viewport" class="viewport-area">
+                
+                <!-- TAB 1: ACADEMIC CHAT -->
+                <section id="view-chat" class="view-panel active">
+                    <!-- Welcome hero (shown when no messages) -->
+                    <div id="chat-welcome-hero" class="chat-hero">
+                        <div class="hero-badge">
+                            <i class="fa-solid fa-sparkles"></i> Dual Hybrid RAG Engine
+                        </div>
+                        <h2 class="hero-title">Ask anything from your <span class="gradient-text">academic notes</span></h2>
+                        <p class="hero-subtitle">
+                            Every answer is strictly grounded in your uploaded materials with exact page citations, 
+                            confidence scores, and interactive source inspectors.
+                        </p>
+
+                        <!-- Suggested starter chips -->
+                        <div class="starter-chips-container">
+                            <span class="starter-title">Try asking about the loaded notes:</span>
+                            <div class="chips-grid">
+                                <button class="query-chip" data-query="What are the four Coffman conditions for a deadlock?">
+                                    <i class="fa-solid fa-arrow-right"></i> What are the four Coffman conditions for a deadlock?
+                                </button>
+                                <button class="query-chip" data-query="Compare Dijkstra's algorithm with Bellman-Ford. When does Dijkstra fail?">
+                                    <i class="fa-solid fa-arrow-right"></i> Compare Dijkstra vs Bellman-Ford
+                                </button>
+                                <button class="query-chip" data-query="Why does the Transformer divide dot-product attention by sqrt(d_k)?">
+                                    <i class="fa-solid fa-arrow-right"></i> Scaled Dot-Product Attention in Transformers
+                                </button>
+                                <button class="query-chip" data-query="Explain the Bias-Variance tradeoff and how to mitigate overfitting.">
+                                    <i class="fa-solid fa-arrow-right"></i> Bias-Variance Tradeoff & Overfitting
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Chat Message History -->
+                    <div id="chat-messages-container" class="messages-scroll-area">
+                        <!-- Messages appended dynamically -->
+                    </div>
+
+                    <!-- Input Bar -->
+                    <div class="chat-input-bar">
+                        <form id="chat-form" class="chat-form">
+                            <div class="input-wrapper">
+                                <textarea 
+                                    id="chat-user-input" 
+                                    class="chat-textarea" 
+                                    placeholder="Ask a question about formulas, definitions, algorithms, or exam concepts..." 
+                                    rows="1"
+                                    required
+                                ></textarea>
+                                <div class="input-actions">
+                                    <span class="key-hint"><kbd>Enter</kbd> to send, <kbd>Shift+Enter</kbd> newline</span>
+                                    <button type="submit" id="btn-send-message" class="btn-send" title="Send Question">
+                                        <i class="fa-solid fa-paper-plane"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </section>
+
+                <!-- TAB 2: FLASHCARDS DECK -->
+                <section id="view-flashcards" class="view-panel">
+                    <div class="panel-header">
+                        <div>
+                            <h2 class="panel-title">Interactive Study Flashcards</h2>
+                            <p class="panel-subtitle">Automatically extracted formulas, theorems, and core definitions for active recall.</p>
+                        </div>
+                        <div class="panel-actions">
+                            <button id="btn-refresh-flashcards" class="btn btn-secondary btn-sm">
+                                <i class="fa-solid fa-arrows-rotate"></i> Regenerate Cards
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="flashcards-wrapper">
+                        <!-- Card Viewport -->
+                        <div class="flashcard-scene">
+                            <div id="flashcard-element" class="flashcard-card">
+                                <div class="card-face card-front">
+                                    <div class="card-top-meta">
+                                        <span id="fc-category" class="card-badge">Concept</span>
+                                        <span id="fc-page" class="page-tag">Page 1</span>
+                                    </div>
+                                    <div class="card-body">
+                                        <p id="fc-front-text" class="card-prompt">Click to flip and reveal the definition...</p>
+                                    </div>
+                                    <div class="card-footer-hint">
+                                        <i class="fa-solid fa-rotate"></i> Click card or press Space to flip
+                                    </div>
+                                </div>
+                                <div class="card-face card-back">
+                                    <div class="card-top-meta">
+                                        <span class="card-badge success">Answer & Explanation</span>
+                                        <span id="fc-doc" class="doc-tag">CS_Foundations.pdf</span>
+                                    </div>
+                                    <div class="card-body">
+                                        <p id="fc-back-text" class="card-answer">Explanation will appear here.</p>
+                                    </div>
+                                    <div class="card-footer-hint">
+                                        <i class="fa-solid fa-rotate"></i> Click to flip back
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Flashcard Controls -->
+                        <div class="flashcard-controls">
+                            <button id="btn-fc-prev" class="btn btn-secondary">
+                                <i class="fa-solid fa-chevron-left"></i> Previous
+                            </button>
+                            <div class="card-counter">
+                                Card <span id="fc-current-idx">1</span> of <span id="fc-total-count">0</span>
+                            </div>
+                            <button id="btn-fc-flip" class="btn btn-primary">
+                                <i class="fa-solid fa-rotate"></i> Flip Card
+                            </button>
+                            <button id="btn-fc-next" class="btn btn-secondary">
+                                Next <i class="fa-solid fa-chevron-right"></i>
+                            </button>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- TAB 3: PRACTICE EXAM QUIZ -->
+                <section id="view-quiz" class="view-panel">
+                    <div class="panel-header">
+                        <div>
+                            <h2 class="panel-title">Practice Exam Quiz</h2>
+                            <p class="panel-subtitle">Test your retention with exam-style questions generated strictly from your notes.</p>
+                        </div>
+                        <div class="panel-actions">
+                            <button id="btn-refresh-quiz" class="btn btn-secondary btn-sm">
+                                <i class="fa-solid fa-arrows-rotate"></i> New Quiz
+                            </button>
+                        </div>
+                    </div>
+
+                    <div id="quiz-container" class="quiz-container">
+                        <div class="quiz-progress-bar-container">
+                            <div class="quiz-progress-info">
+                                <span id="quiz-question-counter">Question 1 of 5</span>
+                                <span id="quiz-score-badge">Score: 0 / 0</span>
+                            </div>
+                            <div class="progress-bar-track">
+                                <div id="quiz-progress-fill" class="progress-bar-fill" style="width: 20%;"></div>
+                            </div>
+                        </div>
+
+                        <div id="quiz-card" class="quiz-card">
+                            <div class="quiz-question-header">
+                                <span id="quiz-page-citation" class="page-tag">From Page 1</span>
+                                <h3 id="quiz-question-text" class="quiz-question-title">Loading question...</h3>
+                            </div>
+
+                            <div id="quiz-options-grid" class="quiz-options-list">
+                                <!-- Options dynamically rendered -->
+                            </div>
+
+                            <div id="quiz-explanation-box" class="quiz-explanation hidden">
+                                <div class="explanation-header">
+                                    <i id="quiz-feedback-icon" class="fa-solid fa-circle-check"></i>
+                                    <span id="quiz-feedback-title">Correct!</span>
+                                </div>
+                                <p id="quiz-explanation-text">Explanation details...</p>
+                            </div>
+
+                            <div class="quiz-card-footer">
+                                <button id="btn-quiz-next" class="btn btn-primary hidden">
+                                    Next Question <i class="fa-solid fa-arrow-right"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- TAB 4: EXECUTIVE SUMMARY & CHEAT SHEET -->
+                <section id="view-summary" class="view-panel">
+                    <div class="panel-header">
+                        <div>
+                            <h2 class="panel-title">Executive Study Guide & Cheat Sheet</h2>
+                            <p class="panel-subtitle">High-yield summary, formulas, and critical concepts synthesized from all documents.</p>
+                        </div>
+                        <div class="panel-actions">
+                            <button id="btn-refresh-summary" class="btn btn-secondary btn-sm">
+                                <i class="fa-solid fa-arrows-rotate"></i> Refresh
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="summary-content-layout">
+                        <!-- Overview Card -->
+                        <div class="summary-hero-card">
+                            <div class="summary-badge"><i class="fa-solid fa-graduation-cap"></i> Synthesis Overview</div>
+                            <p id="summary-overview-text" class="summary-body">Upload notes to generate an executive study guide.</p>
+                        </div>
+
+                        <!-- High-Yield Formulas Section -->
+                        <div class="summary-section">
+                            <h3 class="section-heading"><i class="fa-solid fa-square-root-variable"></i> Key Formulas & Laws</h3>
+                            <div id="summary-formulas-grid" class="formulas-grid">
+                                <!-- Formulas rendered here -->
+                            </div>
+                        </div>
+
+                        <!-- Modules Section -->
+                        <div class="summary-section">
+                            <h3 class="section-heading"><i class="fa-solid fa-list-check"></i> Module Breakdown</h3>
+                            <div id="summary-modules-grid" class="modules-grid">
+                                <!-- Modules rendered here -->
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- TAB 5: CHUNK EXPLORER -->
+                <section id="view-chunks" class="view-panel">
+                    <div class="panel-header">
+                        <div>
+                            <h2 class="panel-title">Chunk & Page Explorer</h2>
+                            <p class="panel-subtitle">Inspect how your academic documents were parsed, chunked, and indexed.</p>
+                        </div>
+                        <div class="chunk-search-bar">
+                            <i class="fa-solid fa-magnifying-glass"></i>
+                            <input type="text" id="chunk-search-input" placeholder="Search chunks by keyword (e.g. Coffman, Dijkstra, Transformer)...">
+                        </div>
+                    </div>
+
+                    <div class="chunks-stats-bar">
+                        <span id="chunks-count-label">Showing all chunks</span>
+                    </div>
+
+                    <div id="chunks-results-grid" class="chunks-grid">
+                        <!-- Chunks rendered here -->
+                    </div>
+                </section>
+            </main>
+        </div>
+
+        <!-- SOURCE CITATION DETAILS MODAL -->
+        <div id="citation-modal" class="modal-backdrop hidden">
+            <div class="modal-dialog">
+                <div class="modal-header">
+                    <div class="modal-title-wrap">
+                        <i class="fa-solid fa-quote-left modal-icon"></i>
+                        <div>
+                            <h3 id="modal-cite-title" class="modal-title">Source Citation Context</h3>
+                            <span id="modal-cite-meta" class="modal-subtitle">Document: CS_Foundations.pdf | Page 1</span>
+                        </div>
+                    </div>
+                    <button id="btn-close-cite-modal" class="btn-close-modal"><i class="fa-solid fa-xmark"></i></button>
+                </div>
+                <div class="modal-body">
+                    <div class="modal-badge-row">
+                        <span id="modal-cite-badge" class="badge-relevance">Relevance: 98%</span>
+                        <span id="modal-cite-section" class="badge-section">1.1 Deadlock</span>
+                    </div>
+                    <div class="citation-quote-box">
+                        <p id="modal-cite-text" class="citation-full-text">Verbatim text excerpt...</p>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button id="btn-cite-done" class="btn btn-secondary">Close Inspector</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- SETTINGS MODAL -->
+        <div id="settings-modal" class="modal-backdrop hidden">
+            <div class="modal-dialog">
+                <div class="modal-header">
+                    <div class="modal-title-wrap">
+                        <i class="fa-solid fa-sliders modal-icon"></i>
+                        <div>
+                            <h3 class="modal-title">AI Engine Settings</h3>
+                            <span class="modal-subtitle">Configure Google Gemini API or use built-in offline hybrid RAG</span>
+                        </div>
+                    </div>
+                    <button id="btn-close-settings-modal" class="btn-close-modal"><i class="fa-solid fa-xmark"></i></button>
+                </div>
+                <div class="modal-body">
+                    <div class="settings-group">
+                        <label for="settings-api-key" class="settings-label">
+                            Google Gemini API Key (Optional)
+                        </label>
+                        <input 
+                            type="password" 
+                            id="settings-api-key" 
+                            class="settings-input" 
+                            placeholder="AIzaSy..." 
+                            autocomplete="off"
+                        >
+                        <p class="settings-helper">
+                            Get a free key from <a href="https://aistudio.google.com/" target="_blank" rel="noopener">Google AI Studio</a>. 
+                            If left blank, ScholarMind operates in <b>Autonomous Hybrid RAG Mode</b> (zero cost, zero API key required).
+                        </p>
+                    </div>
+
+                    <div class="settings-status-box">
+                        <div class="setting-status-item">
+                            <span class="label">Current Engine Mode:</span>
+                            <span id="settings-current-mode" class="value">Autonomous Hybrid RAG (Offline)</span>
+                        </div>
+                        <div class="setting-status-item">
+                            <span class="label">Hybrid Retrieval:</span>
+                            <span class="value text-success">BM25 + TF-IDF (RRF) Active</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button id="btn-cancel-settings" class="btn btn-ghost">Cancel</button>
+                    <button id="btn-save-settings" class="btn btn-primary">Save Settings</button>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Application Script -->
+    <script src="/static/app.js"></script>
+</body>
+</html>
