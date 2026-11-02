@@ -1,0 +1,710 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Wine Ensemble ML Practical | Decision Tree, Bagging, AdaBoost & Voting</title>
+  <meta name="description" content="Interactive Machine Learning lab practical comparing Single Decision Tree, Bagging Classifier, AdaBoost, and Voting Classifier on the Wine dataset.">
+  
+  <!-- Google Fonts: Outfit, Inter, JetBrains Mono -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;700&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  
+  <!-- FontAwesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  
+  <!-- Plotly.js -->
+  <script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
+
+  <!-- Custom Stylesheet -->
+  <link rel="stylesheet" href="style.css">
+</head>
+<body class="dark-theme">
+  <!-- Background Glow Accents -->
+  <div class="bg-glow bg-glow-1"></div>
+  <div class="bg-glow bg-glow-2"></div>
+
+  <!-- Top App Navigation Bar -->
+  <header class="app-header">
+    <div class="header-left">
+      <div class="brand-badge">
+        <i class="fa-solid fa-wine-glass-empty brand-icon"></i>
+        <span class="brand-text">ML LAB PRACTICAL</span>
+      </div>
+      <div class="title-meta">
+        <h1 class="app-title">Wine Ensemble Classifier Benchmark</h1>
+        <p class="app-subtitle">Single Decision Tree vs. Bagging vs. AdaBoost vs. Voting Classifier</p>
+      </div>
+    </div>
+    
+    <div class="header-right">
+      <div class="dataset-pill" id="datasetPill">
+        <span class="pill-dot"></span>
+        <span class="pill-text">Wine Dataset: 178 Samples | 13 Features | 3 Classes</span>
+      </div>
+      <button id="btnTrainHeader" class="btn btn-primary glow-button">
+        <i class="fa-solid fa-play"></i>
+        <span>Run Benchmark</span>
+      </button>
+      <button id="btnPrintReport" class="btn btn-secondary">
+        <i class="fa-solid fa-file-arrow-down"></i>
+        <span>Export Report</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- Main Layout Container -->
+  <div class="app-layout">
+    
+    <!-- Collapsible Config Sidebar -->
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-header">
+        <div class="sidebar-title">
+          <i class="fa-solid fa-sliders"></i>
+          <span>Hyperparameters</span>
+        </div>
+        <button id="btnResetDefaults" class="btn-icon" title="Reset default parameters">
+          <i class="fa-solid fa-rotate-left"></i>
+        </button>
+      </div>
+
+      <div class="sidebar-content">
+        <!-- Global Split & Preprocessing -->
+        <div class="param-group">
+          <div class="param-group-header">
+            <span class="group-num">01</span>
+            <h4>Data Partition & Scaler</h4>
+          </div>
+          <div class="param-control">
+            <div class="param-label-row">
+              <label for="sliderTestSize">Test Set Ratio</label>
+              <span class="param-value" id="valTestSize">0.25 (25%)</span>
+            </div>
+            <input type="range" id="sliderTestSize" min="0.10" max="0.40" step="0.05" value="0.25">
+          </div>
+
+          <div class="param-control">
+            <div class="param-label-row">
+              <label for="selectScaler">Feature Scaler</label>
+            </div>
+            <select id="selectScaler" class="custom-select">
+              <option value="standard" selected>StandardScaler (Z-score)</option>
+              <option value="minmax">MinMaxScaler (0 - 1)</option>
+              <option value="none">None (Raw Features)</option>
+            </select>
+          </div>
+
+          <div class="param-control">
+            <div class="param-label-row">
+              <label for="sliderCvFolds">Stratified CV Folds</label>
+              <span class="param-value" id="valCvFolds">5 Folds</span>
+            </div>
+            <input type="range" id="sliderCvFolds" min="3" max="10" step="1" value="5">
+          </div>
+        </div>
+
+        <!-- 1. Single Decision Tree -->
+        <div class="param-group">
+          <div class="param-group-header">
+            <span class="group-num">02</span>
+            <h4>1. Single Decision Tree</h4>
+          </div>
+          <div class="param-control">
+            <div class="param-label-row">
+              <label for="selectTreeCriterion">Splitting Criterion</label>
+            </div>
+            <select id="selectTreeCriterion" class="custom-select">
+              <option value="gini" selected>Gini Impurity</option>
+              <option value="entropy">Entropy (Info Gain)</option>
+              <option value="log_loss">Log Loss</option>
+            </select>
+          </div>
+          <div class="param-control">
+            <div class="param-label-row">
+              <label for="sliderTreeDepth">Max Depth (None = Full)</label>
+              <span class="param-value" id="valTreeDepth">None</span>
+            </div>
+            <input type="range" id="sliderTreeDepth" min="1" max="10" step="1" value="0">
+            <span class="helper-text">0 = Unlimited (Observe Overfitting)</span>
+          </div>
+          <div class="param-control">
+            <div class="param-label-row">
+              <label for="sliderTreeMinSamples">Min Samples Split</label>
+              <span class="param-value" id="valTreeMinSamples">2</span>
+            </div>
+            <input type="range" id="sliderTreeMinSamples" min="2" max="10" step="1" value="2">
+          </div>
+        </div>
+
+        <!-- 2. Bagging Classifier -->
+        <div class="param-group">
+          <div class="param-group-header">
+            <span class="group-num">03</span>
+            <h4>2. Bagging Classifier</h4>
+          </div>
+          <div class="param-control">
+            <div class="param-label-row">
+              <label for="sliderBagEstimators">Number of Base Trees</label>
+              <span class="param-value" id="valBagEstimators">50</span>
+            </div>
+            <input type="range" id="sliderBagEstimators" min="10" max="150" step="10" value="50">
+          </div>
+          <div class="param-control">
+            <div class="param-label-row">
+              <label for="sliderBagSamples">Subsample Ratio</label>
+              <span class="param-value" id="valBagSamples">1.0</span>
+            </div>
+            <input type="range" id="sliderBagSamples" min="0.5" max="1.0" step="0.1" value="1.0">
+          </div>
+          <div class="param-control toggle-control">
+            <label for="chkBagBootstrap">Bootstrap (With Replacement)</label>
+            <input type="checkbox" id="chkBagBootstrap" checked class="custom-toggle">
+          </div>
+        </div>
+
+        <!-- 3. AdaBoost Classifier -->
+        <div class="param-group">
+          <div class="param-group-header">
+            <span class="group-num">04</span>
+            <h4>3. AdaBoost Classifier</h4>
+          </div>
+          <div class="param-control">
+            <div class="param-label-row">
+              <label for="sliderAdaEstimators">Boosting Rounds</label>
+              <span class="param-value" id="valAdaEstimators">50</span>
+            </div>
+            <input type="range" id="sliderAdaEstimators" min="10" max="150" step="10" value="50">
+          </div>
+          <div class="param-control">
+            <div class="param-label-row">
+              <label for="sliderAdaLr">Learning Rate (&eta;)</label>
+              <span class="param-value" id="valAdaLr">1.0</span>
+            </div>
+            <input type="range" id="sliderAdaLr" min="0.1" max="2.0" step="0.1" value="1.0">
+          </div>
+          <div class="param-control">
+            <div class="param-label-row">
+              <label for="sliderAdaDepth">Base Stump Depth</label>
+              <span class="param-value" id="valAdaDepth">1</span>
+            </div>
+            <input type="range" id="sliderAdaDepth" min="1" max="3" step="1" value="1">
+          </div>
+        </div>
+
+        <!-- 4. Voting Classifier -->
+        <div class="param-group">
+          <div class="param-group-header">
+            <span class="group-num">05</span>
+            <h4>4. Voting Classifier</h4>
+          </div>
+          <div class="param-control">
+            <div class="param-label-row">
+              <label for="selectVotingType">Voting Mechanism</label>
+            </div>
+            <select id="selectVotingType" class="custom-select">
+              <option value="soft" selected>Soft Voting (Avg Probabilities)</option>
+              <option value="hard">Hard Voting (Majority Vote)</option>
+            </select>
+          </div>
+          <div class="param-control">
+            <div class="param-label-row">
+              <label>Model Weights (Tree : Bag : Ada)</label>
+              <span class="param-value" id="valVotingWeights">1 : 2 : 2</span>
+            </div>
+            <div class="weight-sliders">
+              <input type="range" id="weightTree" min="0" max="5" step="1" value="1" title="Tree Weight">
+              <input type="range" id="weightBag" min="0" max="5" step="1" value="2" title="Bagging Weight">
+              <input type="range" id="weightAda" min="0" max="5" step="1" value="2" title="AdaBoost Weight">
+            </div>
+          </div>
+        </div>
+
+        <!-- Re-run Button -->
+        <div class="sidebar-action">
+          <button id="btnTrainSidebar" class="btn btn-primary btn-block glow-button">
+            <i class="fa-solid fa-bolt"></i>
+            <span>Train & Evaluate</span>
+          </button>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Main Content Area -->
+    <main class="main-content">
+      
+      <!-- Tab Navigation Header -->
+      <nav class="tabs-nav">
+        <button class="tab-btn active" data-tab="tab-overview" id="navTabOverview">
+          <i class="fa-solid fa-chart-column"></i>
+          <span>Model Benchmark</span>
+        </button>
+        <button class="tab-btn" data-tab="tab-boundary" id="navTabBoundary">
+          <i class="fa-solid fa-draw-polygon"></i>
+          <span>2D Decision Surfaces</span>
+        </button>
+        <button class="tab-btn" data-tab="tab-confusion" id="navTabConfusion">
+          <i class="fa-solid fa-table-cells"></i>
+          <span>Confusion Matrices</span>
+        </button>
+        <button class="tab-btn" data-tab="tab-features" id="navTabFeatures">
+          <i class="fa-solid fa-dna"></i>
+          <span>Feature Importance</span>
+        </button>
+        <button class="tab-btn" data-tab="tab-predictor" id="navTabPredictor">
+          <i class="fa-solid fa-flask-vial"></i>
+          <span>Live Wine Tester</span>
+        </button>
+        <button class="tab-btn" data-tab="tab-dataset" id="navTabDataset">
+          <i class="fa-solid fa-database"></i>
+          <span>Dataset Explorer</span>
+        </button>
+        <button class="tab-btn" data-tab="tab-theory" id="navTabTheory">
+          <i class="fa-solid fa-book-open"></i>
+          <span>Lab Manual & Viva</span>
+        </button>
+      </nav>
+
+      <!-- TAB 1: MODEL BENCHMARK & COMPARISON -->
+      <section class="tab-pane active" id="tab-overview">
+        <!-- Metric Leaderboard Cards -->
+        <div class="cards-grid" id="leaderboardCards">
+          <!-- Populated dynamically via JS -->
+        </div>
+
+        <!-- Charts Row 1: Metrics Grouped Bar & Radar Profile -->
+        <div class="charts-row">
+          <div class="chart-card flex-2">
+            <div class="card-header">
+              <div class="card-title">
+                <i class="fa-solid fa-chart-simple text-cyan"></i>
+                <h3>Holistic Performance Metrics Comparison</h3>
+              </div>
+              <span class="card-badge">Train vs. Test vs. CV</span>
+            </div>
+            <div class="chart-body" id="chartMetricsBar"></div>
+          </div>
+
+          <div class="chart-card flex-1">
+            <div class="card-header">
+              <div class="card-title">
+                <i class="fa-solid fa-spider text-purple"></i>
+                <h3>Model Profile Radar</h3>
+              </div>
+              <span class="card-badge">Multi-Dimensional</span>
+            </div>
+            <div class="chart-body" id="chartRadar"></div>
+          </div>
+        </div>
+
+        <!-- Charts Row 2: Overfitting Gap Analysis & ROC-AUC -->
+        <div class="charts-row">
+          <div class="chart-card flex-1">
+            <div class="card-header">
+              <div class="card-title">
+                <i class="fa-solid fa-scale-unbalanced text-amber"></i>
+                <h3>Overfitting Gap Analysis (Train Acc - Test Acc)</h3>
+              </div>
+              <span class="card-badge">Variance Check</span>
+            </div>
+            <div class="chart-body" id="chartOverfit"></div>
+          </div>
+
+          <div class="chart-card flex-1">
+            <div class="card-header">
+              <div class="card-title">
+                <i class="fa-solid fa-wave-square text-emerald"></i>
+                <h3>Multiclass ROC Curves (One-vs-Rest)</h3>
+              </div>
+              <span class="card-badge">Class Discriminability</span>
+            </div>
+            <div class="chart-body" id="chartRoc"></div>
+          </div>
+        </div>
+
+        <!-- Detailed Benchmark Table -->
+        <div class="chart-card">
+          <div class="card-header">
+            <div class="card-title">
+              <i class="fa-solid fa-table-list text-cyan"></i>
+              <h3>Detailed Statistical Benchmarks</h3>
+            </div>
+            <span class="card-badge">Exact Lab Metrics</span>
+          </div>
+          <div class="table-responsive">
+            <table class="benchmark-table" id="tableBenchmark">
+              <thead>
+                <tr>
+                  <th>Classifier Model</th>
+                  <th>Train Accuracy</th>
+                  <th>Test Accuracy</th>
+                  <th>Overfit Gap</th>
+                  <th>Macro Precision</th>
+                  <th>Macro Recall</th>
+                  <th>Macro F1</th>
+                  <th>Stratified CV Mean</th>
+                  <th>ROC-AUC (OvR)</th>
+                  <th>Train Latency</th>
+                </tr>
+              </thead>
+              <tbody id="tbodyBenchmark">
+                <!-- Dynamically filled -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- TAB 2: 2D DECISION SURFACES -->
+      <section class="tab-pane" id="tab-boundary">
+        <div class="control-banner">
+          <div class="banner-title">
+            <i class="fa-solid fa-eye text-cyan"></i>
+            <div>
+              <h3>2D Decision Boundary Landscapes</h3>
+              <p>Compare how orthogonal single trees differ from smooth bagging envelopes, boosted margins, and ensemble votes.</p>
+            </div>
+          </div>
+
+          <div class="banner-controls">
+            <div class="select-wrapper">
+              <label for="selectBoundaryFeatureX">X-Axis Feature</label>
+              <select id="selectBoundaryFeatureX" class="custom-select select-sm">
+                <option value="pca_1" selected>PCA Component 1</option>
+                <!-- Filled dynamically with 13 features -->
+              </select>
+            </div>
+            <div class="select-wrapper">
+              <label for="selectBoundaryFeatureY">Y-Axis Feature</label>
+              <select id="selectBoundaryFeatureY" class="custom-select select-sm">
+                <option value="pca_2" selected>PCA Component 2</option>
+                <!-- Filled dynamically with 13 features -->
+              </select>
+            </div>
+            <button id="btnRecomputeBoundary" class="btn btn-secondary btn-sm">
+              <i class="fa-solid fa-arrows-rotate"></i>
+              <span>Render Surfaces</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- 4 Grid of Decision Boundaries -->
+        <div class="boundary-grid">
+          <div class="boundary-card">
+            <div class="boundary-card-header">
+              <span class="badge-tag tag-tree">Single Decision Tree</span>
+              <span class="subtext">Sharp, axis-parallel orthogonal splits</span>
+            </div>
+            <div class="boundary-chart" id="chartBoundaryTree"></div>
+          </div>
+
+          <div class="boundary-card">
+            <div class="boundary-card-header">
+              <span class="badge-tag tag-bagging">Bagging Classifier</span>
+              <span class="subtext">Averaged smooth boundaries, reduced variance</span>
+            </div>
+            <div class="boundary-chart" id="chartBoundaryBag"></div>
+          </div>
+
+          <div class="boundary-card">
+            <div class="boundary-card-header">
+              <span class="badge-tag tag-adaboost">AdaBoost Classifier</span>
+              <span class="subtext">Adaptive boundary contour around hard points</span>
+            </div>
+            <div class="boundary-chart" id="chartBoundaryAda"></div>
+          </div>
+
+          <div class="boundary-card">
+            <div class="boundary-card-header">
+              <span class="badge-tag tag-voting">Voting Classifier</span>
+              <span class="subtext">Ensemble consensus boundary</span>
+            </div>
+            <div class="boundary-chart" id="chartBoundaryVote"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- TAB 3: CONFUSION MATRICES -->
+      <section class="tab-pane" id="tab-confusion">
+        <div class="cm-grid">
+          <div class="cm-card">
+            <div class="cm-header">
+              <h4>Single Decision Tree</h4>
+              <span class="cm-badge" id="cmBadgeTree">--</span>
+            </div>
+            <div class="cm-chart" id="cmChartTree"></div>
+          </div>
+
+          <div class="cm-card">
+            <div class="cm-header">
+              <h4>Bagging Classifier</h4>
+              <span class="cm-badge" id="cmBadgeBag">--</span>
+            </div>
+            <div class="cm-chart" id="cmChartBag"></div>
+          </div>
+
+          <div class="cm-card">
+            <div class="cm-header">
+              <h4>AdaBoost Classifier</h4>
+              <span class="cm-badge" id="cmBadgeAda">--</span>
+            </div>
+            <div class="cm-chart" id="cmChartAda"></div>
+          </div>
+
+          <div class="cm-card">
+            <div class="cm-header">
+              <h4>Voting Classifier</h4>
+              <span class="cm-badge" id="cmBadgeVote">--</span>
+            </div>
+            <div class="cm-chart" id="cmChartVote"></div>
+          </div>
+        </div>
+
+        <div class="interpretation-box">
+          <div class="interp-icon">
+            <i class="fa-solid fa-lightbulb"></i>
+          </div>
+          <div class="interp-content">
+            <h4>Confusion Matrix & Class Error Observations</h4>
+            <p id="cmInsightsText">Loading evaluation insights...</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- TAB 4: FEATURE IMPORTANCE -->
+      <section class="tab-pane" id="tab-features">
+        <div class="chart-card">
+          <div class="card-header">
+            <div class="card-title">
+              <i class="fa-solid fa-dna text-purple"></i>
+              <h3>Chemical Biomarker Feature Importance Comparison</h3>
+            </div>
+            <span class="card-badge">Gini / Weight Importance</span>
+          </div>
+          <div class="chart-body chart-tall" id="chartFeatureImportance"></div>
+        </div>
+
+        <div class="insights-grid">
+          <div class="insight-tile">
+            <i class="fa-solid fa-bottle-droplet text-cyan"></i>
+            <h5>Flavanoids & Phenols</h5>
+            <p>Primary chemical differentiator separating Class 0 and Class 2 cultivars from Class 1.</p>
+          </div>
+          <div class="insight-tile">
+            <i class="fa-solid fa-palette text-amber"></i>
+            <h5>Color Intensity</h5>
+            <p>Crucial visual marker that differentiates lighter Barbera wines from deep Barolo.</p>
+          </div>
+          <div class="insight-tile">
+            <i class="fa-solid fa-seedling text-emerald"></i>
+            <h5>Proline Content</h5>
+            <p>Amino acid concentration that provides high discriminative power for Single Tree and Bagging models.</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- TAB 5: LIVE WINE PREDICTOR -->
+      <section class="tab-pane" id="tab-predictor">
+        <div class="predictor-container">
+          <!-- Input Sliders Column -->
+          <div class="predictor-inputs">
+            <div class="predictor-card-header">
+              <h3><i class="fa-solid fa-sliders text-cyan"></i> Custom Wine Chemical Profile</h3>
+              <button id="btnPredictPreset" class="btn btn-secondary btn-sm">Load Preset Cultivar</button>
+            </div>
+            <p class="predictor-subtext">Adjust the 13 chemical features below to observe real-time predictions and confidence scores across all four classifiers.</p>
+            
+            <div class="features-grid-inputs" id="featureSlidersContainer">
+              <!-- Dynamically populated with 13 sliders with realistic Wine ranges -->
+            </div>
+          </div>
+
+          <!-- Predictions Output Column -->
+          <div class="predictor-outputs">
+            <div class="predictor-card-header">
+              <h3><i class="fa-solid fa-square-poll-vertical text-emerald"></i> Ensemble Consensus & Probabilities</h3>
+            </div>
+
+            <div class="prediction-cards-list" id="predictionResultsList">
+              <!-- Populated dynamically -->
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- TAB 6: DATASET EXPLORER -->
+      <section class="tab-pane" id="tab-dataset">
+        <div class="dataset-meta-cards" id="datasetStatsRow">
+          <!-- Dynamically filled with total samples, class breakdown, etc. -->
+        </div>
+
+        <div class="chart-card">
+          <div class="card-header">
+            <div class="card-title">
+              <i class="fa-solid fa-table text-cyan"></i>
+              <h3>Wine Chemical Recognition Dataset (First 20 Records)</h3>
+            </div>
+            <a href="/wine_dataset.csv" download="wine_dataset.csv" class="btn btn-secondary btn-sm">
+              <i class="fa-solid fa-download"></i>
+              <span>Download CSV</span>
+            </a>
+          </div>
+          <div class="table-responsive table-tall">
+            <table class="benchmark-table" id="tableDatasetPreview">
+              <thead id="theadDataset"></thead>
+              <tbody id="tbodyDataset"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="chart-card">
+          <div class="card-header">
+            <div class="card-title">
+              <i class="fa-solid fa-fire text-amber"></i>
+              <h3>Feature Correlation Heatmap</h3>
+            </div>
+            <span class="card-badge">Pearson Correlation Matrix</span>
+          </div>
+          <div class="chart-body chart-tall" id="chartCorrelation"></div>
+        </div>
+      </section>
+
+      <!-- TAB 7: LAB MANUAL & VIVA GUIDE -->
+      <section class="tab-pane" id="tab-theory">
+        <div class="lab-manual-container">
+          <div class="manual-header">
+            <span class="manual-tag">PRACTICAL LAB MANUAL</span>
+            <h2>Comparative Performance Study of Single Decision Tree, Bagging, AdaBoost & Voting Classifier</h2>
+            <div class="manual-meta">
+              <span><strong>Course:</strong> Advanced Machine Learning / AI Practical</span>
+              <span><strong>Dataset:</strong> UCI Wine Recognition Dataset</span>
+              <span><strong>Libraries:</strong> scikit-learn, numpy, pandas</span>
+            </div>
+          </div>
+
+          <div class="manual-section">
+            <h3><i class="fa-solid fa-bullseye"></i> 1. Practical Aim & Objectives</h3>
+            <ul>
+              <li>To implement and analyze a <strong>Single Decision Tree Classifier (CART)</strong> on the multiclass Wine dataset and inspect variance issues.</li>
+              <li>To implement <strong>Bootstrap Aggregation (Bagging Classifier)</strong> to reduce variance and smooth boundary partitions.</li>
+              <li>To implement <strong>Adaptive Boosting (AdaBoost Classifier)</strong> to reduce bias using sequential weighted decision stumps.</li>
+              <li>To construct an <strong>Ensemble Voting Classifier</strong> combining diverse learners via Hard and Soft probability voting.</li>
+              <li>To evaluate models through <strong>Confusion Matrices, Precision, Recall, F1-Score, Multi-class ROC-AUC, 10-Fold Stratified Cross-Validation</strong>, and <strong>2D Decision Surface Boundary Plots</strong>.</li>
+            </ul>
+          </div>
+
+          <div class="manual-section">
+            <h3><i class="fa-solid fa-square-root-variable"></i> 2. Mathematical Principles & Theoretical Formulations</h3>
+            <div class="theory-grid">
+              <div class="theory-card">
+                <h4>Single Decision Tree</h4>
+                <p>Recursively partitions feature space using Gini Impurity:</p>
+                <code>I_G(t) = 1 - \sum_{i=1}^{C} p_i^2</code>
+                <p><strong>Limitation:</strong> High variance ($\text{Var}(f(x))$), sensitive to small perturbations in training data, produces rigid orthogonal splits.</p>
+              </div>
+
+              <div class="theory-card">
+                <h4>Bagging Classifier</h4>
+                <p>Draws $B$ bootstrap samples with replacement; aggregates independent estimators:</p>
+                <code>\hat{f}_{\text{bag}}(x) = \frac{1}{B} \sum_{b=1}^{B} f_b(x)</code>
+                <p><strong>Variance Reduction:</strong> $\text{Var}(\bar{X}) = \rho \sigma^2 + \frac{1 - \rho}{B} \sigma^2$. As $B$ increases, the uncorrelated variance term approaches zero!</p>
+              </div>
+
+              <div class="theory-card">
+                <h4>AdaBoost Classifier</h4>
+                <p>Sequentially fits weak learners $G_m(x)$, boosting sample weights for misclassified samples:</p>
+                <code>w_i^{(m+1)} = w_i^{(m)} \exp\left(\alpha_m \mathbb{I}(y_i \neq G_m(x_i))\right)</code>
+                <p>$\alpha_m = \frac{1}{2} \ln\left(\frac{1 - \text{err}_m}{\text{err}_m}\right)$. Converts weak learners into a strong learner by minimizing exponential loss.</p>
+              </div>
+
+              <div class="theory-card">
+                <h4>Voting Classifier</h4>
+                <p>Ensemble consensus combining distinct classifiers $C_1, C_2, \dots, C_M$:</p>
+                <code>\text{Soft Voting: } \hat{y} = \arg\max_k \sum_{j=1}^{M} w_j P(Y=k \mid C_j, x)</code>
+                <p>Weights high-confidence probabilities, yielding robust generalization and dampening individual model anomalies.</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="manual-section">
+            <h3><i class="fa-solid fa-clipboard-question"></i> 3. Viva Voce Examination Questions & Answers</h3>
+            <div class="viva-accordion">
+              <div class="viva-item">
+                <div class="viva-question">
+                  <span>Q1: Why does a Single Decision Tree often overfit on small datasets like Wine?</span>
+                  <i class="fa-solid fa-chevron-down"></i>
+                </div>
+                <div class="viva-answer">
+                  <p>A decision tree grown without depth constraint keeps splitting until leaves are pure ($100\%$ training accuracy). It models specific noise in the training set rather than the underlying data generating distribution, causing a large gap between training and testing accuracy (high variance).</p>
+                </div>
+              </div>
+
+              <div class="viva-item">
+                <div class="viva-question">
+                  <span>Q2: What is the core difference between Bagging and Boosting?</span>
+                  <i class="fa-solid fa-chevron-down"></i>
+                </div>
+                <div class="viva-answer">
+                  <p><strong>Bagging</strong> trains independent base learners in parallel on bootstrap subsets with replacement, focusing primarily on <em>variance reduction</em>. <strong>Boosting</strong> trains base learners sequentially, where each new learner corrects the residuals/errors of its predecessor, focusing primarily on <em>bias reduction</em>.</p>
+                </div>
+              </div>
+
+              <div class="viva-item">
+                <div class="viva-question">
+                  <span>Q3: What is the difference between Hard Voting and Soft Voting?</span>
+                  <i class="fa-solid fa-chevron-down"></i>
+                </div>
+                <div class="viva-answer">
+                  <p><strong>Hard Voting</strong> uses a simple majority rule based on predicted discrete class labels ($\text{mode}\{C_1(x), C_2(x), \dots\}$). <strong>Soft Voting</strong> calculates the weighted average of the predicted class probabilities ($\sum w_j P_j(k)$) and picks the class with the highest average probability. Soft voting is generally superior because it accounts for individual model confidence.</p>
+                </div>
+              </div>
+
+              <div class="viva-item">
+                <div class="viva-question">
+                  <span>Q4: Why does Bagging need base learners to be diverse and unstable (e.g. unpruned trees)?</span>
+                  <i class="fa-solid fa-chevron-down"></i>
+                </div>
+                <div class="viva-answer">
+                  <p>Bagging works best with low-bias, high-variance learners (unpruned trees) because averaging diverse trees neutralizes the variance. If the base learners are already low-variance (e.g., shallow linear models), bagging offers minimal performance gain.</p>
+                </div>
+              </div>
+
+              <div class="viva-item">
+                <div class="viva-question">
+                  <span>Q5: How does Stratified K-Fold Cross Validation help prevent evaluation bias on the Wine dataset?</span>
+                  <i class="fa-solid fa-chevron-down"></i>
+                </div>
+                <div class="viva-answer">
+                  <p>The Wine dataset contains 178 samples distributed unevenly across 3 classes ($59, 71, 48$). Stratified K-Fold guarantees that each fold preserves the exact class percentage ratio, preventing folds from having zero samples of a minority class.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="manual-section">
+            <h3><i class="fa-solid fa-terminal"></i> 4. Practical Code Execution Commands</h3>
+            <pre class="code-snippet">
+# 1. Run the comprehensive terminal lab practical with comparison plots:
+python practical_script.py
+
+# 2. Run the interactive web visualization dashboard:
+python app.py
+# Opens at http://127.0.0.1:8000
+
+# 3. Run the Streamlit interactive dashboard:
+streamlit run streamlit_app.py
+            </pre>
+          </div>
+        </div>
+      </section>
+
+    </main>
+  </div>
+
+  <!-- Toast Notification Container -->
+  <div class="toast-container" id="toastContainer"></div>
+
+  <!-- Custom Application Script -->
+  <script src="app.js"></script>
+</body>
+</html>
