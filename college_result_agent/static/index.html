@@ -1,0 +1,595 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>College Result Analysis Agent — AI SQL Intelligence</title>
+  <link rel="stylesheet" href="/css/styles.css">
+  <!-- Chart.js CDN for interactive visualizations -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+
+  <!-- App Header -->
+  <header class="app-header">
+    <div class="header-container">
+      <div class="brand-wrapper">
+        <div class="brand-icon">🎓</div>
+        <div class="brand-title">
+          <h1>College Result Analysis Agent</h1>
+          <p>Autonomous AI & SQL Analytics Engine for Academic Evaluations</p>
+        </div>
+      </div>
+
+      <!-- Navigation Tabs -->
+      <nav class="tabs-nav">
+        <button class="tab-btn active" data-tab="tab-chat">
+          <span>🤖</span> AI Result Agent
+        </button>
+        <button class="tab-btn" data-tab="tab-dashboard">
+          <span>📊</span> Analytics Dashboard
+        </button>
+        <button class="tab-btn" data-tab="tab-transcript">
+          <span>📜</span> Student Marksheet
+        </button>
+        <button class="tab-btn" data-tab="tab-subject">
+          <span>📚</span> Subject Deep Dive
+        </button>
+        <button class="tab-btn" data-tab="tab-sql">
+          <span>⚡</span> SQL Studio
+        </button>
+      </nav>
+
+      <div class="header-badges">
+        <div class="status-pill">
+          <span class="status-dot"></span>
+          <span>SQLite Connected</span>
+        </div>
+        <button id="btn-open-settings" class="action-chip-btn" style="padding: 0.4rem 0.75rem;" title="Configure LLM API Key">
+          ⚙️ AI Config
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Content Area -->
+  <main class="app-main">
+
+    <!-- TAB 1: AI Chat Assistant -->
+    <section id="tab-chat" class="tab-pane active">
+      <div class="chat-layout">
+        
+        <!-- Left: Chat Card -->
+        <div class="card chat-main-card">
+          <div class="chat-header">
+            <h2><span>💬</span> Result Analysis Assistant</h2>
+            <span style="font-size: 0.8rem; color: var(--text-muted);">
+              Ask questions in plain English • Instant Text-to-SQL
+            </span>
+          </div>
+
+          <!-- Chat Messages History -->
+          <div id="chat-history" class="chat-history">
+            <!-- Welcome message -->
+            <div class="chat-msg agent">
+              <div class="msg-avatar">🤖</div>
+              <div class="msg-bubble">
+                <p>Hello! I am your <strong>College Result Analysis Agent</strong>. I can query our SQL database to answer detailed questions about:</p>
+                <div class="msg-kpis" style="margin-top: 0.6rem;">
+                  <span class="kpi-chip">📈 <strong>Pass Percentage:</strong> Overall, Dept-wise, Sem-wise, Subject-wise</span>
+                  <span class="kpi-chip">📝 <strong>Student Marks:</strong> Marksheets, Roll No Lookup, SGPA, Ranks</span>
+                  <span class="kpi-chip">📊 <strong>Subject Analytics:</strong> Difficulty, Averages, Failures, Backlogs</span>
+                </div>
+                <p style="margin-top: 0.5rem; font-size: 0.82rem; color: var(--text-muted);">
+                  💡 Try asking one of the suggested questions in the right sidebar, or type any query below!
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Input Bar -->
+          <div class="chat-input-wrapper">
+            <div class="input-row">
+              <input 
+                type="text" 
+                id="chat-input" 
+                class="chat-input" 
+                placeholder="Ask about pass %, subject performance, roll no marks, toppers..."
+                autocomplete="off"
+              />
+              <button id="chat-send-btn" class="send-btn">
+                <span>Send</span>
+                <span>➤</span>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right: Suggested Prompts Sidebar -->
+        <div class="card chat-sidebar-card">
+          
+          <div class="sidebar-section">
+            <h3><span>📈</span> Pass Percentage Queries</h3>
+            <div class="query-chips">
+              <button class="query-chip" data-query="What is the overall pass percentage of the college?">
+                <span>Overall college pass rate</span>
+                <span class="arrow">→</span>
+              </button>
+              <button class="query-chip" data-query="Compare pass percentage across all departments">
+                <span>Department-wise pass %</span>
+                <span class="arrow">→</span>
+              </button>
+              <button class="query-chip" data-query="What is the pass percentage of Computer Science?">
+                <span>CSE Department pass rate</span>
+                <span class="arrow">→</span>
+              </button>
+              <button class="query-chip" data-query="Compare Section A vs Section B performance">
+                <span>Section A vs Section B</span>
+                <span class="arrow">→</span>
+              </button>
+            </div>
+          </div>
+
+          <div class="sidebar-section">
+            <h3><span>📚</span> Subject Performance</h3>
+            <div class="query-chips">
+              <button class="query-chip" data-query="Show subject-wise performance for Semester 4">
+                <span>Subject averages & pass rate</span>
+                <span class="arrow">→</span>
+              </button>
+              <button class="query-chip" data-query="Which subject has the lowest pass percentage?">
+                <span>Toughest subjects</span>
+                <span class="arrow">→</span>
+              </button>
+              <button class="query-chip" data-query="What is the pass percentage in Database Management Systems?">
+                <span>DBMS pass percentage</span>
+                <span class="arrow">→</span>
+              </button>
+              <button class="query-chip" data-query="Who scored the highest marks in Operating Systems?">
+                <span>OS Subject topper</span>
+                <span class="arrow">→</span>
+              </button>
+            </div>
+          </div>
+
+          <div class="sidebar-section">
+            <h3><span>🏆</span> Marks & Toppers</h3>
+            <div class="query-chips">
+              <button class="query-chip" data-query="Show top 5 students in Computer Science">
+                <span>Top 5 CSE rankers</span>
+                <span class="arrow">→</span>
+              </button>
+              <button class="query-chip" data-query="Show complete report card for roll CS24-001">
+                <span>Report card: CS24-001</span>
+                <span class="arrow">→</span>
+              </button>
+              <button class="query-chip" data-query="List all students who failed with backlogs">
+                <span>Backlog student list</span>
+                <span class="arrow">→</span>
+              </button>
+              <button class="query-chip" data-query="What is the overall grade distribution?">
+                <span>Distinction / Grade stats</span>
+                <span class="arrow">→</span>
+              </button>
+            </div>
+          </div>
+
+        </div>
+
+      </div>
+    </section>
+
+    <!-- TAB 2: Analytics Dashboard -->
+    <section id="tab-dashboard" class="tab-pane">
+      
+      <!-- Top KPI Grid -->
+      <div class="dashboard-kpi-grid">
+        <div class="kpi-card green">
+          <div class="kpi-icon">🎓</div>
+          <div class="kpi-meta">
+            <p>Overall Pass Rate</p>
+            <h3 id="dash-pass-rate">--%</h3>
+          </div>
+        </div>
+
+        <div class="kpi-card">
+          <div class="kpi-icon">👥</div>
+          <div class="kpi-meta">
+            <p>Total Evaluated</p>
+            <h3 id="dash-total-students">--</h3>
+          </div>
+        </div>
+
+        <div class="kpi-card green">
+          <div class="kpi-icon">✅</div>
+          <div class="kpi-meta">
+            <p>Passed (All Clear)</p>
+            <h3 id="dash-passed-students">--</h3>
+          </div>
+        </div>
+
+        <div class="kpi-card red">
+          <div class="kpi-icon">⚠️</div>
+          <div class="kpi-meta">
+            <p>Students with Backlogs</p>
+            <h3 id="dash-failed-students">--</h3>
+          </div>
+        </div>
+
+        <div class="kpi-card purple">
+          <div class="kpi-icon">⭐</div>
+          <div class="kpi-meta">
+            <p>College Mean SGPA</p>
+            <h3 id="dash-avg-sgpa">--</h3>
+          </div>
+        </div>
+      </div>
+
+      <!-- Charts Grid -->
+      <div class="dashboard-charts-grid">
+        
+        <div class="card chart-card">
+          <div class="chart-card-header">
+            <h3>🏢 Department Pass Percentage & Score Comparison</h3>
+            <span style="font-size: 0.78rem; color: var(--text-muted);">CSE vs IT vs ECE vs MECH</span>
+          </div>
+          <div class="chart-canvas-box">
+            <canvas id="dash-dept-chart"></canvas>
+          </div>
+        </div>
+
+        <div class="card chart-card">
+          <div class="chart-card-header">
+            <h3>📊 Student Classification</h3>
+            <span style="font-size: 0.78rem; color: var(--text-muted);">Outcome Breakdown</span>
+          </div>
+          <div class="chart-canvas-box">
+            <canvas id="dash-grade-chart"></canvas>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Tables and Subject Chart Section -->
+      <div class="tables-section-grid">
+        
+        <div class="card chart-card">
+          <div class="chart-card-header">
+            <h3>📚 Subject Pass Rates & Backlog Tallies</h3>
+            <span style="font-size: 0.78rem; color: var(--text-muted);">All 18 Courses</span>
+          </div>
+          <div class="chart-canvas-box">
+            <canvas id="dash-subject-chart"></canvas>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="chart-card-header">
+            <h3>🥇 Top Academic Rankers</h3>
+            <span style="font-size: 0.78rem; color: var(--text-muted);">Highest CGPA / %</span>
+          </div>
+          <div class="table-responsive">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Rank</th>
+                  <th>Roll No</th>
+                  <th>Name</th>
+                  <th>Dept</th>
+                  <th>%</th>
+                  <th>SGPA</th>
+                </tr>
+              </thead>
+              <tbody id="dash-toppers-tbody">
+                <!-- Dynamically populated -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+      </div>
+
+    </section>
+
+    <!-- TAB 3: Student Marksheet / Report Card Generator -->
+    <section id="tab-transcript" class="tab-pane">
+      
+      <div class="search-bar-row">
+        <label for="transcript-student-select" style="font-weight: 600; font-size: 0.9rem;">
+          Select Student:
+        </label>
+        <select id="transcript-student-select" class="student-select">
+          <option value="">Loading students...</option>
+        </select>
+        <button id="print-transcript-btn" class="print-btn">
+          <span>🖨️</span> Print / Save PDF Marksheet
+        </button>
+      </div>
+
+      <!-- Printable Academic Transcript -->
+      <div class="transcript-card" id="printable-transcript-card">
+        
+        <div class="transcript-header">
+          <h2>COLLEGE OF ENGINEERING & TECHNOLOGY</h2>
+          <p class="sub">Autonomous Academic Institution • Accredited 'A+' Grade • Affiliated to State University</p>
+          <h3>Official Statement of Marks & Grades</h3>
+          <p class="sub">Even Semester Examination — Academic Session 2023–2024</p>
+        </div>
+
+        <div class="student-meta-grid">
+          <div class="student-meta-item">
+            <strong>Candidate Name:</strong>
+            <span id="tr-name">--</span>
+          </div>
+          <div class="student-meta-item">
+            <strong>Roll Number:</strong>
+            <span id="tr-roll">--</span>
+          </div>
+          <div class="student-meta-item">
+            <strong>University USN:</strong>
+            <span id="tr-usn">--</span>
+          </div>
+          <div class="student-meta-item">
+            <strong>Department:</strong>
+            <span id="tr-dept">--</span>
+          </div>
+          <div class="student-meta-item">
+            <strong>Semester / Section:</strong>
+            <span id="tr-sem">--</span>
+          </div>
+          <div class="student-meta-item">
+            <strong>Academic Batch:</strong>
+            <span id="tr-batch">--</span>
+          </div>
+        </div>
+
+        <!-- Marks Table -->
+        <table class="transcript-table">
+          <thead>
+            <tr>
+              <th>Course Code</th>
+              <th>Course Title</th>
+              <th>Credits</th>
+              <th>Internal (30)</th>
+              <th>External (70)</th>
+              <th>Total (100)</th>
+              <th>Letter Grade</th>
+              <th>Grade Point</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody id="transcript-marks-tbody">
+            <!-- Populated via JS -->
+          </tbody>
+        </table>
+
+        <!-- Summary Metric Box -->
+        <div class="transcript-summary-box">
+          <div class="summary-metric">
+            <p>Total Marks</p>
+            <h4 id="tr-tot-marks">-- / --</h4>
+          </div>
+          <div class="summary-metric">
+            <p>Overall Percentage</p>
+            <h4 id="tr-percentage">--%</h4>
+          </div>
+          <div class="summary-metric">
+            <p>SGPA (10 Point Scale)</p>
+            <h4 id="tr-sgpa">--</h4>
+          </div>
+          <div class="summary-metric">
+            <p>Final Classification</p>
+            <h4 id="tr-status" style="color: #10b981;">--</h4>
+          </div>
+        </div>
+
+        <!-- Signatures -->
+        <div class="signatures-row">
+          <div class="sign-block">Controller of Examinations</div>
+          <div class="sign-block">Head of Department</div>
+          <div class="sign-block">Principal / Dean</div>
+        </div>
+
+      </div>
+
+    </section>
+
+    <!-- TAB 4: Subject Deep Dive -->
+    <section id="tab-subject" class="tab-pane">
+      
+      <div class="search-bar-row">
+        <label for="subj-select" style="font-weight: 600; font-size: 0.9rem;">
+          Choose Subject:
+        </label>
+        <select id="subj-select" class="student-select">
+          <option value="">Loading subjects...</option>
+        </select>
+      </div>
+
+      <div class="card" style="margin-bottom: 1.5rem;">
+        <div class="chart-card-header">
+          <h2 id="subj-name-title" style="font-size: 1.25rem; font-weight: 700; color: #60a5fa;">
+            Subject Performance Overview
+          </h2>
+          <span id="subj-failed-count-badge" class="badge badge-red">-- Backlogs</span>
+        </div>
+
+        <div class="dashboard-kpi-grid" style="margin-top: 1rem;">
+          <div class="kpi-card green">
+            <div class="kpi-icon">📈</div>
+            <div class="kpi-meta">
+              <p>Pass Percentage</p>
+              <h3 id="subj-pass-rate">--%</h3>
+            </div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-icon">👥</div>
+            <div class="kpi-meta">
+              <p>Enrolled Students</p>
+              <h3 id="subj-enrolled">--</h3>
+            </div>
+          </div>
+          <div class="kpi-card purple">
+            <div class="kpi-icon">📊</div>
+            <div class="kpi-meta">
+              <p>Class Average</p>
+              <h3 id="subj-avg-marks">-- / 100</h3>
+            </div>
+          </div>
+          <div class="kpi-card green">
+            <div class="kpi-icon">🥇</div>
+            <div class="kpi-meta">
+              <p>Topper Score</p>
+              <h3 id="subj-high-marks">-- / 100</h3>
+            </div>
+          </div>
+          <div class="kpi-card amber">
+            <div class="kpi-icon">📉</div>
+            <div class="kpi-meta">
+              <p>Lowest Score</p>
+              <h3 id="subj-low-marks">-- / 100</h3>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Students who failed list -->
+      <div class="card">
+        <div class="chart-card-header">
+          <h3>⚠️ Backlog Register & Struggling Students</h3>
+          <span style="font-size: 0.78rem; color: var(--text-muted);">
+            Students scoring &lt; 40 total marks
+          </span>
+        </div>
+
+        <div class="table-responsive">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Roll No</th>
+                <th>Student Name</th>
+                <th>Section</th>
+                <th>Internal (/30)</th>
+                <th>External (/70)</th>
+                <th>Total (/100)</th>
+                <th>Grade</th>
+              </tr>
+            </thead>
+            <tbody id="subj-failed-tbody">
+              <!-- Populated via JS -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- TAB 5: SQL Studio & Database Schema Explorer -->
+    <section id="tab-sql" class="tab-pane">
+      <div class="sql-studio-grid">
+        
+        <!-- Left: Query Editor & Output -->
+        <div class="card">
+          <div class="chart-card-header">
+            <h3>⚡ Analytical SQL Query Console</h3>
+            <div>
+              <label for="sql-sample-select" style="font-size: 0.78rem; color: var(--text-muted); margin-right: 0.4rem;">Recipes:</label>
+              <select id="sql-sample-select" style="background:#0f172a; border:1px solid var(--border-color); color:#fff; padding:0.35rem 0.6rem; border-radius:4px; font-size:0.78rem;">
+                <option value="">-- Choose SQL Recipe --</option>
+                <option value="SELECT * FROM v_department_performance;">Department Performance Summary</option>
+                <option value="SELECT * FROM v_subject_performance ORDER BY pass_percentage ASC;">Subjects Ranked by Pass Rate (Ascending)</option>
+                <option value="SELECT roll_no, student_name, dept_code, percentage, sgpa, result_status FROM v_student_summary WHERE result_status = 'Distinction' ORDER BY percentage DESC LIMIT 10;">Distinction Rankers</option>
+                <option value="SELECT s.dept_code, s.gender, COUNT(*) as student_count, ROUND(AVG(s.percentage), 2) as avg_pct, ROUND(AVG(s.sgpa), 2) as avg_sgpa FROM v_student_summary s GROUP BY s.dept_code, s.gender;">Gender-Wise Performance Breakdown</option>
+                <option value="SELECT sub.subject_code, sub.subject_name, fac.name as faculty_in_charge, fac.designation FROM subjects sub JOIN subject_faculty sf ON sub.subject_id = sf.subject_id JOIN faculty fac ON sf.faculty_id = fac.faculty_id;">Faculty Course Allocations</option>
+              </select>
+            </div>
+          </div>
+
+          <textarea 
+            id="sql-editor-textarea" 
+            class="sql-editor-textarea" 
+            spellcheck="false"
+            placeholder="Write analytical SELECT query..."
+          >SELECT dept_code, total_students, passed_students, pass_percentage, average_percentage FROM v_department_performance;</textarea>
+
+          <div class="sql-controls-bar">
+            <span id="sql-meta-info" style="font-size: 0.8rem; color: var(--text-muted);">Ready to execute</span>
+            <div style="display: flex; gap: 0.5rem;">
+              <button id="btn-download-sql-csv" class="action-chip-btn">
+                📥 Export CSV
+              </button>
+              <button id="btn-run-sql" class="btn-execute">
+                <span>▶ Run Query</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Query Result Table -->
+          <div id="sql-result-container" class="table-responsive" style="max-height: 380px; overflow-y: auto;">
+            <!-- Rendered table -->
+          </div>
+        </div>
+
+        <!-- Right: Database Schema Explorer -->
+        <div class="card">
+          <div class="chart-card-header">
+            <h3>🗄️ Database Schema Explorer</h3>
+            <span style="font-size: 0.75rem; color: var(--text-muted);">Click to inspect</span>
+          </div>
+
+          <div id="schema-tree-container" class="schema-tree-box">
+            <!-- Populated via JS -->
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Settings Modal (Optional LLM Key) -->
+  <div id="settings-modal" class="modal-overlay">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3>⚙️ AI Agent LLM Configuration</h3>
+        <button id="btn-close-settings" class="btn-close-modal">&times;</button>
+      </div>
+      <p style="font-size: 0.82rem; color: var(--text-muted); margin-bottom: 1rem;">
+        The agent has a built-in offline NLP & SQL query engine that works completely out of the box without any API key. If you'd like to enable Google Gemini, Groq, or OpenAI for generative reasoning, enter your API key below:
+      </p>
+
+      <div style="margin-bottom: 1rem;">
+        <label for="setting-provider" style="font-size: 0.82rem; font-weight: 600; display: block; margin-bottom: 0.4rem;">
+          LLM Provider:
+        </label>
+        <select id="setting-provider" style="width: 100%; background: #0f172a; border: 1px solid var(--border-color); color: #fff; padding: 0.6rem; border-radius: 6px;">
+          <option value="gemini">Google Gemini (Gemini 2.0 Flash)</option>
+          <option value="groq">Groq (Llama 3.3 70B Versatile)</option>
+          <option value="openai">OpenAI (GPT-4o Mini)</option>
+        </select>
+      </div>
+
+      <div style="margin-bottom: 1.5rem;">
+        <label for="setting-api-key" style="font-size: 0.82rem; font-weight: 600; display: block; margin-bottom: 0.4rem;">
+          API Key (Optional):
+        </label>
+        <input 
+          type="password" 
+          id="setting-api-key" 
+          placeholder="AIza... or gsk_... or sk-..."
+          style="width: 100%; background: #0f172a; border: 1px solid var(--border-color); color: #fff; padding: 0.6rem; border-radius: 6px;"
+        />
+      </div>
+
+      <div style="display: flex; justify-content: flex-end; gap: 0.5rem;">
+        <button id="btn-save-settings" class="btn-execute" style="width: 100%; justify-content: center;">
+          Save Settings
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- App Script -->
+  <script src="/js/app.js"></script>
+</body>
+</html>
