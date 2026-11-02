@@ -1,0 +1,24 @@
+{
+  "name": "dreamcanvas-ai-generator",
+  "version": "1.0.0",
+  "description": "DreamCanvas — AI Text-to-Image Generator powered by FLUX.1-schnell, React, Vite, Tailwind CSS and FastAPI",
+  "private": true,
+  "scripts": {
+    "dev:frontend": "npm --prefix frontend run dev",
+    "build:frontend": "npm --prefix frontend run build",
+    "dev:backend": "uvicorn backend.main:app --reload --port 8000",
+    "test:backend": "pytest backend/tests"
+  },
+  "keywords": [
+    "text-to-image",
+    "flux",
+    "fastapi",
+    "react",
+    "vite",
+    "tailwind",
+    "huggingface"
+  ],
+  "author": "DreamCanvas Team",
+  "license": "MIT"
+}
+
