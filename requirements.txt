@@ -1,12 +1,4 @@
 streamlit
-langchain
-langchain-google-genai
-langgraph
-pymupdf
-python-docx
-sentence-transformers
-scikit-learn
 pandas
-mysql-connector-python
-python-dotenv
-pydantic
+mlxtend
+matplotlib

@@ -1,0 +1,10 @@
+# Core dependencies (optional if running in standalone mode, as core uses Python 3.10+ standard library)
+# If you wish to use official SDKs or enhanced terminal styling:
+# pip install -r requirements.txt
+
+# Enhanced terminal output
+rich>=13.0.0
+
+# Optional official SDKs (the system also supports direct REST API without these)
+google-generativeai>=0.8.0
+openai>=1.0.0
