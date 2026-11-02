@@ -1,0 +1,66 @@
+/* App.css */
+
+.app {
+  position: relative;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Animated background orbs */
+.bg-orbs {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  overflow: hidden;
+}
+
+.orb {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(80px);
+  opacity: 0.12;
+  animation: floatOrb 20s infinite ease-in-out;
+}
+
+.orb-1 {
+  width: 600px; height: 600px;
+  background: radial-gradient(circle, #6366f1, #8b5cf6);
+  top: -200px; left: -200px;
+  animation-delay: 0s;
+}
+
+.orb-2 {
+  width: 500px; height: 500px;
+  background: radial-gradient(circle, #10b981, #06b6d4);
+  bottom: -150px; right: -150px;
+  animation-delay: -7s;
+}
+
+.orb-3 {
+  width: 400px; height: 400px;
+  background: radial-gradient(circle, #f59e0b, #ef4444);
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  animation-delay: -14s;
+}
+
+@keyframes floatOrb {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  33% { transform: translate(40px, -30px) scale(1.1); }
+  66% { transform: translate(-20px, 20px) scale(0.95); }
+}
+
+/* Main layout */
+.main-content {
+  flex: 1;
+  position: relative;
+  z-index: 1;
+  padding: 2rem 1rem 4rem;
+}
+
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+}
