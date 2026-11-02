@@ -1,0 +1,3 @@
+[submodule "RBT23CB024_PromptEngineeringPlayground"]
+	path = RBT23CB024_PromptEngineeringPlayground
+	url = https://github.com/0bVdnt/PromptEngineeringPlayground.git
