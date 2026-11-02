@@ -1,204 +1,155 @@
-"""
-Streamlit Web Application for the GenAI Text-to-SQL Agent.
-Provides an interactive interface to query the SQLite sales database using natural language.
-"""
 
-import json
-import os
-from pathlib import Path
 import streamlit as st
-from dotenv import load_dotenv
-
-# Load environment variables
-load_dotenv()
-
-# Import agent and database modules
-import agent
-import database
-
-# Initialize the SQLite database automatically on application start
-database.init_db()
+import pandas as pd
+import matplotlib.pyplot as plt
+from mlxtend.frequent_patterns import apriori, association_rules
 
 # Page configuration
-st.set_page_config(
-    page_title="GenAI Text-to-SQL Agent",
-    page_icon="🔍",
-    layout="wide",
-)
+st.set_page_config(page_title="Apriori Analysis", page_icon="🛒", layout="wide")
 
-# Application Title and Description
-st.title("GenAI Text-to-SQL Agent")
-st.markdown(
-    """
-    This application translates natural-language questions into safe, validated SQLite queries,
-    executes them against the local sales database in read-only mode, and produces a structured JSON report.
-    """
-)
+# Frontend
+st.title("🛒 Market Basket Analysis")
+st.subheader("Apriori Algorithm")
+st.write("Find frequently purchased products using association rules.")
 
-# Check API Key status
-api_key = os.getenv("GEMINI_API_KEY", "").strip()
-has_api_key = bool(api_key and api_key != "your_api_key_here")
+# Sidebar settings
+st.sidebar.header("Algorithm Settings")
+support = st.sidebar.slider("Minimum Support", 0.01, 0.5, 0.01)
+confidence = st.sidebar.slider("Minimum Confidence", 0.1, 1.0, 0.2)
 
-# Sidebar: Database Preview and Settings
-with st.sidebar:
-    st.header("⚙️ Configuration")
-    model_name = os.getenv("GEMINI_MODEL", "gemini-2.5-flash")
-    st.text(f"Model: {model_name}")
+# Upload dataset
+st.header("1. Upload Dataset")
+file = st.file_uploader("Upload Kaggle CSV file", type=["csv"])
 
-    if not has_api_key:
-        st.warning("⚠️ No Gemini API key detected in `.env`.")
-        mock_mode_default = True
+if file is not None:
+
+    df = pd.read_csv(file)
+
+    st.success("Dataset uploaded successfully!")
+    st.subheader("Dataset Preview")
+    st.dataframe(df.head())
+
+    # Backend preprocessing
+    required = ["Member_number", "Date", "itemDescription"]
+
+    if not all(col in df.columns for col in required):
+        st.error("Please upload the Groceries dataset with the correct columns.")
+
     else:
-        st.success("✅ Gemini API Key detected.")
-        mock_mode_default = False
+        df = df.dropna(subset=required).copy()
 
-    mock_mode = st.checkbox(
-        "Enable Mock Mode (Offline Testing)",
-        value=mock_mode_default,
-        help="Simulates LLM generation locally without calling the Gemini API.",
-    )
+        df["Transaction"] = (
+            df["Member_number"].astype(str) + "_" +
+            df["Date"].astype(str)
+        )
 
-    if mock_mode:
-        st.info("ℹ️ Running in Mock Demonstration Mode.")
+        basket = df.groupby(
+            ["Transaction", "itemDescription"]
+        ).size().unstack(fill_value=0)
 
-    st.divider()
+        basket = (basket > 0).astype(int)
 
-    st.header("📊 Database Preview (`sales`)")
-    try:
-        sales_records = database.get_all_sales()
-        st.dataframe(sales_records, use_container_width=True)
-    except Exception as e:
-        st.error(f"Failed to load database preview: {e}")
+        st.header("2. Preprocessed Dataset")
+        st.dataframe(basket.head())
 
-    with st.expander("View Table Schema"):
-        st.code(database.get_schema(), language="sql")
+        # Run Apriori
+        if st.button("Run Apriori Algorithm"):
 
-# Example Questions Section
-st.subheader("💡 Example Questions")
-examples = [
-    "Show all products and their prices.",
-    "Show the top three products by total sales.",
-    "What is the total quantity of items sold?",
-    "What is the total revenue generated from all sales?",
-    "Show products ordered from highest to lowest price.",
-]
+            frequent = apriori(
+                basket,
+                min_support=support,
+                use_colnames=True
+            )
 
-cols = st.columns(len(examples))
-for i, ex in enumerate(examples):
-    if cols[i].button(ex, key=f"ex_{i}"):
-        st.session_state["question_input"] = ex
+            st.header("3. Frequent Itemsets")
 
-# Question Input Area
-default_question = st.session_state.get(
-    "question_input", "Show the top three products by total sales."
-)
-user_question = st.text_input(
-    "Enter your natural-language question:",
-    value=default_question,
-    placeholder="e.g. Show all products with their prices",
-)
+            if frequent.empty:
+                st.warning("No frequent itemsets found. Reduce minimum support.")
 
-# Unsafe Test queries helper for testing
-with st.expander("Security Test Presets (Verify Query Validation)"):
-    st.caption("Click any preset below to test conservative security rejection:")
-    test_cols = st.columns(3)
-    if test_cols[0].button("⚠️ Test DELETE Statement"):
-        st.session_state["question_input"] = "DELETE FROM sales"
-        st.rerun()
-    if test_cols[1].button("⚠️ Test Unauthorized Table"):
-        st.session_state["question_input"] = "SELECT * FROM users"
-        st.rerun()
-    if test_cols[2].button("⚠️ Test SQL Comment Injection"):
-        st.session_state["question_input"] = "SELECT * FROM sales -- drop table"
-        st.rerun()
-
-# Execute Action
-generate_btn = st.button("Generate and Execute SQL", type="primary")
-
-if generate_btn:
-    if not user_question.strip():
-        st.warning("Please enter a question or query before proceeding.")
-    else:
-        # Check if the user is testing raw SQL directly in the input box
-        # If it looks like raw SQL (e.g., DELETE, DROP, SELECT), test validation directly
-        raw_upper = user_question.strip().upper()
-        if raw_upper.startswith(("DELETE", "DROP", "INSERT", "UPDATE", "ALTER", "CREATE", "SELECT")):
-            # Direct validation test
-            query = user_question.strip()
-            is_valid, val_err = agent.validate_sql(query)
-            if not is_valid:
-                report = {
-                    "question": user_question,
-                    "query": query,
-                    "result": [],
-                    "summary": "Query execution blocked due to security validation failure.",
-                    "status": "error",
-                    "error": val_err,
-                }
             else:
-                try:
-                    res = agent.execute_sql(query)
-                    report = {
-                        "question": user_question,
-                        "query": query,
-                        "result": res,
-                        "summary": agent.create_summary(user_question, res),
-                        "status": "success",
-                        "error": None,
-                    }
-                except Exception as exc:
-                    report = {
-                        "question": user_question,
-                        "query": query,
-                        "result": [],
-                        "summary": "Query execution failed on the database.",
-                        "status": "error",
-                        "error": str(exc),
-                    }
-        else:
-            with st.spinner("Processing question with Text-to-SQL Agent..."):
-                report = agent.run_agent(
-                    question=user_question,
-                    mock_mode=mock_mode,
+                frequent["Items"] = frequent["itemsets"].apply(
+                    lambda x: ", ".join(sorted(x))
                 )
 
-        st.session_state["latest_report"] = report
+                frequent_output = frequent[["Items", "support"]]
+                st.dataframe(frequent_output)
 
-# Render Report Output if present
-if "latest_report" in st.session_state:
-    report = st.session_state["latest_report"]
+                st.header("4. Association Rules")
 
-    st.divider()
+                if frequent["itemsets"].apply(len).max() >= 2:
 
-    # 1. Validation Status & Error Handling
-    if report["status"] == "success":
-        st.success("✅ **Validation Status: PASSED** (Read-only SELECT query verified safe)")
-    else:
-        st.error(f"❌ **Validation / Execution Status: FAILED**\n\n{report['error']}")
+                    rules = association_rules(
+                        frequent,
+                        metric="confidence",
+                        min_threshold=confidence
+                    )
 
-    # 2. Generated SQL Query
-    st.subheader("Generated SQL Query")
-    if report["query"]:
-        st.code(report["query"], language="sql")
-    else:
-        st.write("*(No query generated)*")
+                else:
+                    rules = pd.DataFrame()
 
-    # 3. Query Results Table
-    st.subheader("Query Results")
-    if report["status"] == "success" and report["result"]:
-        st.dataframe(report["result"], use_container_width=True)
-    elif report["status"] == "success":
-        st.info("Query executed successfully, but returned 0 rows.")
-    else:
-        st.write("*(No results to display due to query rejection or error)*")
+                if rules.empty:
+                    st.warning("No association rules found. Reduce minimum confidence.")
 
-    # 4. Summary
-    st.subheader("Summary")
-    if report["status"] == "success":
-        st.info(f"💡 {report['summary']}")
-    else:
-        st.warning(f"⚠️ {report['summary']}")
+                else:
+                    rules["Antecedents"] = rules["antecedents"].apply(
+                        lambda x: ", ".join(sorted(x))
+                    )
+                    rules["Consequents"] = rules["consequents"].apply(
+                        lambda x: ", ".join(sorted(x))
+                    )
 
-    # 5. Complete Structured JSON Report
-    with st.expander("Complete Structured JSON Report", expanded=True):
-        st.json(report)
+                    output = rules[
+                        ["Antecedents", "Consequents",
+                         "support", "confidence", "lift"]
+                    ]
+
+                    st.dataframe(output)
+
+                # Dashboard
+                st.header("5. Analysis Dashboard")
+
+                c1, c2, c3 = st.columns(3)
+
+                c1.metric("Transactions", len(basket))
+                c2.metric("Products", len(basket.columns))
+                c3.metric("Frequent Itemsets", len(frequent))
+
+                # Visualization
+                st.header("6. Visualization")
+
+                top = frequent.sort_values(
+                    "support", ascending=False
+                ).head(10)
+
+                if not top.empty:
+                    fig, ax = plt.subplots(figsize=(10, 5))
+
+                    labels = top["itemsets"].apply(
+                        lambda x: ", ".join(sorted(x))
+                    )
+
+                    ax.barh(labels, top["support"])
+                    ax.set_xlabel("Support")
+                    ax.set_title("Top 10 Frequent Itemsets")
+                    ax.invert_yaxis()
+
+                    st.pyplot(fig)
+                    plt.close(fig)
+
+                # Download
+                st.header("7. Download Results")
+
+                st.download_button(
+                    "Download Frequent Itemsets",
+                    frequent_output.to_csv(index=False),
+                    "frequent_itemsets.csv"
+                )
+
+                if not rules.empty:
+                    st.download_button(
+                        "Download Association Rules",
+                        output.to_csv(index=False),
+                        "association_rules.csv"
+                    )
+
+                st.success("Apriori Analysis Completed Successfully!")
