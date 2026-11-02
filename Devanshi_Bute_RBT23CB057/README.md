@@ -1,5 +1,9 @@
 # Multi-Agent Technical Report Generation System 🚀
 
+**Student Name:** Devanshi Bute  
+**Roll Number:** RBT23CB057  
+**GitHub:** [@devanshi088](https://github.com/devanshi088)  
+
 An autonomous multi-agent architecture featuring specialized agents that collaboratively research complex technologies, conduct peer-audited evaluations, and synthesize publication-grade structured technical reports.
 
 ---
