@@ -1,0 +1,52 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# Virtual environments
+.venv/
+venv/
+env/
+ENV/
+
+# Packaging and tooling
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+*.egg-info/
+pip-wheel-metadata/
+share/python-wheels/
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Streamlit
+.streamlit/secrets.toml
+
+# Generated images and local outputs
+outputs/*
+!outputs/.gitkeep
+*.png
+*.jpg
+*.jpeg
+*.webp
+
+# Model and cache directories
+.cache/
+cache/
+huggingface/
+models/
+
+# Local environment and editor files
+.env
+.env.*
+.vscode/
+.idea/
+*.log
+.DS_Store
+Thumbs.db

@@ -1,0 +1,18 @@
+# Document 1: WebAssembly (Wasm) Architecture & Runtime Internals
+# Source: Cloud Native Computing Foundation (CNCF) Technical Advisory Group
+# Topic: WebAssembly System Interface (WASI 0.2) & Component Model
+
+1. Architectural Overview:
+WebAssembly (Wasm) is a binary instruction format for a stack-based virtual machine designed as a portable compilation target for high-level languages like Rust, Go, C++, and Python. Originally built for web browsers to run client-side code at near-native speed, Wasm has transitioned to server-side and cloud-native computing via the WebAssembly System Interface (WASI).
+
+2. The WASI 0.2 Component Model:
+The latest WASI 0.2 standard (released 2024-2025) introduces the Wasm Component Model. Instead of monolithic binaries, applications are composed of composable, reusable components with strongly typed interfaces defined using WebAssembly Interface Types (WIT).
+- Isolation Primitives: Every Wasm component executes in a hardware-isolated, linear memory sandbox (typically using 32-bit or 64-bit address spaces).
+- Capability-Based Security: A Wasm binary has zero access to the host filesystem, network, environment variables, or clocks by default. Access to resources must be explicitly granted by the host runtime at instantiation time.
+- Memory Layout: Wasm enforces strict separation between code execution memory and data memory. Code memory is immutable and cannot be rewritten at runtime, preventing classic return-oriented programming (ROP) and buffer overflow exploits.
+
+3. Server-Side Runtime Engines:
+Production deployments rely on dedicated bytecode runtimes:
+- Wasmtime: Developed by the Bytecode Alliance, written in Rust, utilizing the Cranelift JIT compiler.
+- WasmEdge: Cloud Native Computing Foundation sandbox runtime optimized for edge computing and microservices.
+- Spin / Fermyon: Microservice framework leveraging WASI for event-driven serverless functions.

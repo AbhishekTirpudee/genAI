@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Multi-Agent Technical Report Studio</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+    body {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+    }
+    .font-mono {
+      font-family: 'JetBrains Mono', monospace;
+    }
+    .terminal-scroll::-webkit-scrollbar {
+      width: 6px;
+    }
+    .terminal-scroll::-webkit-scrollbar-thumb {
+      background: #334155;
+      border-radius: 4px;
+    }
+  </style>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col">
+
+  <!-- Header -->
+  <header class="border-b border-slate-800 bg-slate-900/50 backdrop-blur sticky top-0 z-50">
+    <div class="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
+      <div class="flex items-center space-x-3">
+        <div class="w-9 h-9 rounded-lg bg-gradient-to-tr from-cyan-500 to-blue-600 flex items-center justify-center font-bold text-white shadow-lg shadow-cyan-500/20">
+          AG
+        </div>
+        <div>
+          <span class="font-extrabold text-lg tracking-tight bg-gradient-to-r from-cyan-400 to-blue-400 bg-clip-text text-transparent">
+            Multi-Agent Tech Reporter
+          </span>
+          <span class="text-xs text-slate-400 block -mt-1 font-mono">Autonomous Research & Writing Swarm</span>
+        </div>
+      </div>
+      <div class="flex items-center space-x-4">
+        <span id="systemStatus" class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+          <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+          Swarm Ready
+        </span>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Container -->
+  <main class="max-w-7xl mx-auto px-6 py-8 flex-1 w-full grid grid-cols-1 lg:grid-cols-12 gap-8">
+
+    <!-- Left Column: Controls & Agent Deliberation -->
+    <div class="lg:col-span-5 flex flex-col space-y-6">
+
+      <!-- Configuration Card -->
+      <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl">
+        <h2 class="text-base font-bold text-slate-200 mb-4 flex items-center gap-2">
+          <svg class="w-5 h-5 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path></svg>
+          Research Parameters
+        </h2>
+
+        <form id="researchForm" class="space-y-4">
+          <div>
+            <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1.5">Target Technology</label>
+            <input
+              type="text"
+              id="techInput"
+              required
+              placeholder="e.g. eBPF, WebAssembly, Rust Async, Vector DBs..."
+              class="w-full bg-slate-950 border border-slate-700 rounded-xl px-4 py-3 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 transition-all"
+            />
+          </div>
+
+          <!-- Suggested quick-select pills -->
+          <div class="space-y-1">
+            <span class="text-xs text-slate-500">Quick suggestions:</span>
+            <div class="flex flex-wrap gap-1.5 pt-1">
+              <button type="button" onclick="selectTech('eBPF in Cloud-Native Observability')" class="text-xs bg-slate-800 hover:bg-slate-700 text-slate-300 px-2.5 py-1 rounded-md transition-colors border border-slate-700/60">eBPF</button>
+              <button type="button" onclick="selectTech('WebAssembly (Wasm) in Cloud Native')" class="text-xs bg-slate-800 hover:bg-slate-700 text-slate-300 px-2.5 py-1 rounded-md transition-colors border border-slate-700/60">Wasm</button>
+              <button type="button" onclick="selectTech('Vector Databases & HNSW Indexing')" class="text-xs bg-slate-800 hover:bg-slate-700 text-slate-300 px-2.5 py-1 rounded-md transition-colors border border-slate-700/60">Vector DBs</button>
+              <button type="button" onclick="selectTech('Rust Concurrency & Tokio Async Runtime')" class="text-xs bg-slate-800 hover:bg-slate-700 text-slate-300 px-2.5 py-1 rounded-md transition-colors border border-slate-700/60">Rust Tokio</button>
+            </div>
+          </div>
+
+          <div>
+            <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1.5">Focus Areas (Optional)</label>
+            <input
+              type="text"
+              id="focusInput"
+              placeholder="e.g. Internals, Latency Benchmarks, Security Tradeoffs"
+              class="w-full bg-slate-950 border border-slate-700 rounded-xl px-4 py-2.5 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 transition-all"
+            />
+          </div>
+
+          <div>
+            <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1.5">Reference Documents / Folder</label>
+            <div class="flex gap-2">
+              <input
+                type="text"
+                id="docsInput"
+                placeholder="e.g. sample_docs/ or path/to/doc.txt"
+                class="flex-1 bg-slate-950 border border-slate-700 rounded-xl px-4 py-2.5 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 transition-all"
+              />
+              <button
+                type="button"
+                onclick="document.getElementById('docsInput').value='sample_docs/'"
+                class="text-xs bg-slate-800 hover:bg-slate-700 text-cyan-400 px-3 py-2 rounded-xl border border-slate-700 transition"
+              >
+                sample_docs/
+              </button>
+            </div>
+          </div>
+
+          <div>
+            <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1.5">Target Audience</label>
+            <select id="audienceSelect" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-4 py-2.5 text-sm text-slate-100 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500">
+              <option value="Principal Engineers & Systems Architects">Principal Engineers & Systems Architects</option>
+              <option value="VP of Engineering & CTOs">Engineering Leadership & CTOs</option>
+              <option value="Senior DevOps & SRE Engineers">DevOps & Site Reliability Engineers</option>
+              <option value="Full-Stack Developers">General Software Developers</option>
+            </select>
+          </div>
+
+          <button
+            type="submit"
+            id="submitBtn"
+            class="w-full bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white font-bold py-3 px-4 rounded-xl shadow-lg shadow-cyan-500/25 transition-all flex items-center justify-center space-x-2 text-sm"
+          >
+            <span id="btnIcon">🚀</span>
+            <span id="btnText">Trigger Multi-Agent Swarm</span>
+          </button>
+        </form>
+      </div>
+
+      <!-- Agent Activity Stream -->
+      <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl flex-1 flex flex-col min-h-[380px]">
+        <div class="flex items-center justify-between mb-3">
+          <h2 class="text-sm font-bold text-slate-200 flex items-center gap-2">
+            <span class="w-2 h-2 rounded-full bg-cyan-400 animate-ping"></span>
+            Agent Collaboration Telemetry
+          </h2>
+          <span id="logCount" class="text-xs font-mono text-slate-500">0 events</span>
+        </div>
+
+        <div id="eventLog" class="flex-1 bg-slate-950 rounded-xl p-4 font-mono text-xs border border-slate-800/80 overflow-y-auto max-h-[350px] terminal-scroll space-y-2 text-slate-300">
+          <div class="text-slate-500 italic">Waiting to dispatch agent swarm...</div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Right Column: Final Generated Report Viewer -->
+    <div class="lg:col-span-7 flex flex-col">
+      <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl flex-1 flex flex-col">
+        <div class="flex items-center justify-between pb-4 border-b border-slate-800 mb-4">
+          <div>
+            <h2 class="text-base font-bold text-slate-100" id="reportHeaderTitle">Technical Report Preview</h2>
+            <p class="text-xs text-slate-400" id="reportHeaderSubtitle">No report generated yet</p>
+          </div>
+          <div class="flex items-center space-x-2" id="actionButtons" style="display: none;">
+            <button onclick="downloadMarkdown()" class="text-xs bg-slate-800 hover:bg-slate-700 text-slate-200 px-3 py-1.5 rounded-lg border border-slate-700 transition">
+              Download .MD
+            </button>
+            <button onclick="openFullHtml()" class="text-xs bg-cyan-600 hover:bg-cyan-500 text-white font-medium px-3 py-1.5 rounded-lg shadow transition">
+              Open Full HTML ↗
+            </button>
+          </div>
+        </div>
+
+        <!-- Report Content Frame -->
+        <div id="reportContainer" class="flex-1 bg-slate-950/60 rounded-xl border border-slate-800/80 p-6 overflow-y-auto max-h-[750px] prose prose-invert max-w-none text-slate-300">
+          <div class="text-center py-20 text-slate-500">
+            <div class="text-4xl mb-3">📄</div>
+            <p class="font-medium">Enter a technology and click "Trigger Multi-Agent Swarm"</p>
+            <p class="text-xs text-slate-600 mt-1">Planner, Research, Reviewer, and Writer agents will collaborate here</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </main>
+
+  <script>
+    let currentReport = null;
+
+    function selectTech(name) {
+      document.getElementById('techInput').value = name;
+    }
+
+    const form = document.getElementById('researchForm');
+    const submitBtn = document.getElementById('submitBtn');
+    const btnText = document.getElementById('btnText');
+    const btnIcon = document.getElementById('btnIcon');
+    const eventLog = document.getElementById('eventLog');
+    const logCount = document.getElementById('logCount');
+    const reportContainer = document.getElementById('reportContainer');
+    const actionButtons = document.getElementById('actionButtons');
+
+    function appendLog(agent, type, message) {
+      const time = new Date().toLocaleTimeString();
+      const div = document.createElement('div');
+      
+      let badgeColor = 'bg-slate-800 text-slate-300';
+      if (agent === 'PlannerAgent') badgeColor = 'bg-indigo-900/60 text-indigo-300 border border-indigo-700/50';
+      if (agent === 'ResearchAgent') badgeColor = 'bg-emerald-900/60 text-emerald-300 border border-emerald-700/50';
+      if (agent === 'ReviewerAgent') badgeColor = 'bg-amber-900/60 text-amber-300 border border-amber-700/50';
+      if (agent === 'ReportWritingAgent') badgeColor = 'bg-purple-900/60 text-purple-300 border border-purple-700/50';
+      if (agent === 'Orchestrator') badgeColor = 'bg-cyan-900/60 text-cyan-300 border border-cyan-700/50';
+
+      div.className = 'border-l-2 border-slate-700 pl-3 py-1 text-xs';
+      div.innerHTML = `
+        <div class="flex items-center space-x-2">
+          <span class="text-slate-500 text-[10px]">${time}</span>
+          <span class="px-2 py-0.5 rounded text-[10px] font-semibold ${badgeColor}">${agent}</span>
+        </div>
+        <p class="mt-1 text-slate-300 leading-relaxed">${message}</p>
+      `;
+
+      if (eventLog.querySelector('.italic')) {
+        eventLog.innerHTML = '';
+      }
+      eventLog.appendChild(div);
+      eventLog.scrollTop = eventLog.scrollHeight;
+      logCount.innerText = `${eventLog.children.length} events`;
+    }
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const tech = document.getElementById('techInput').value.trim();
+      const focus = document.getElementById('focusInput').value.trim();
+      const docs = document.getElementById('docsInput').value.trim();
+      const audience = document.getElementById('audienceSelect').value;
+
+      if (!tech) return;
+
+      submitBtn.disabled = true;
+      submitBtn.classList.add('opacity-70', 'cursor-not-allowed');
+      btnText.innerText = 'Swarm Deliberating...';
+      btnIcon.innerText = '⚙️';
+      eventLog.innerHTML = '';
+
+      appendLog('Orchestrator', 'info', `Initialized multi-agent dispatch for "${tech}".`);
+
+      try {
+        const response = await fetch('/api/generate', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            technology: tech,
+            focus_areas: focus ? focus.split(',').map(s => s.trim()) : [],
+            documents: docs ? [docs] : [],
+            target_audience: audience
+          })
+        });
+
+        const data = await response.json();
+
+        if (data.events && Array.isArray(data.events)) {
+          data.events.forEach(ev => appendLog(ev.agent, ev.event_type, ev.message));
+        }
+
+        if (data.report) {
+          currentReport = data.report;
+          document.getElementById('reportHeaderTitle').innerText = data.report.title || tech;
+          document.getElementById('reportHeaderSubtitle').innerText = `Generated for: ${data.report.target_audience}`;
+          
+          // Render HTML directly inside iframe or container
+          reportContainer.innerHTML = `
+            <div class="prose prose-invert max-w-none">
+              <div class="p-4 bg-slate-900 border border-slate-800 rounded-xl mb-6">
+                <h3 class="text-sm font-bold text-cyan-400 uppercase tracking-wider mb-2">Executive Summary</h3>
+                <p class="text-sm text-slate-300">${data.report.executive_summary.replace(/\\n/g, '<br>')}</p>
+              </div>
+              <div class="space-y-6">
+                ${data.report.sections.map(s => `
+                  <div class="border-b border-slate-800/80 pb-4">
+                    <h3 class="text-lg font-bold text-slate-100 mb-2">${s.title}</h3>
+                    <div class="text-sm text-slate-300 whitespace-pre-wrap">${s.content}</div>
+                  </div>
+                `).join('')}
+              </div>
+            </div>
+          `;
+          actionButtons.style.display = 'flex';
+        }
+      } catch (err) {
+        appendLog('Orchestrator', 'error', `Execution failed: ${err.message}`);
+      } finally {
+        submitBtn.disabled = false;
+        submitBtn.classList.remove('opacity-70', 'cursor-not-allowed');
+        btnText.innerText = 'Trigger Multi-Agent Swarm';
+        btnIcon.innerText = '🚀';
+      }
+    });
+
+    function downloadMarkdown() {
+      if (!currentReport || !currentReport.markdown_content) return;
+      const blob = new Blob([currentReport.markdown_content], { type: 'text/markdown' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${currentReport.technology.toLowerCase().replace(/\\s+/g, '_')}_report.md`;
+      a.click();
+    }
+
+    function openFullHtml() {
+      if (!currentReport || !currentReport.html_content) return;
+      const blob = new Blob([currentReport.html_content], { type: 'text/html' });
+      const url = URL.createObjectURL(blob);
+      window.open(url, '_blank');
+    }
+  </script>
+</body>
+</html>
