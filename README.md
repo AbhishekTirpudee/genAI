@@ -1,401 +1,239 @@
-# EventMind AI — Intelligent Event Management System
+# AgentFlow AI: Intelligent Multi-Agent Task Automation System
 
-> **Plan Smarter. Spend Better. Promote Faster.**  
-> An enterprise-grade, multi-agent AI event management system orchestrating three specialized autonomous agents via **LangGraph** to deliver comprehensive event schedules, deterministic budgets, task registers, and promotional campaigns.
+> **Generative AI Practical Examination Project**  
+> Built with **LangGraph**, **Google Gemini**, **FastAPI**, and **React + Vite + Tailwind CSS**.
 
----
-
-## 1. Project Overview
-
-**EventMind AI** transforms natural-language event requirements into structured, synchronized, and actionable event portfolios. Designed for organizers handling college festivals, technical hackathons, corporate conferences, product launches, workshops, and private celebrations, the platform bridges creative event design with deterministic financial discipline.
-
-### Why Multi-Agent AI?
-Traditional single-prompt LLM event tools often hallucinate arithmetic, skip logistical constraints, or generate inconsistent details across marketing channels. EventMind AI implements a typed state machine where:
-1. **Agent 1 (Event Planning Agent)** structures timelines, equipment, and risk contingencies.
-2. **Agent 2 (Budget Estimation Agent)** computes itemized expenses using deterministic Python `Decimal` arithmetic—guaranteeing zero floating-point drift or hallucinated math.
-3. **Budget Optimization Loop (LangGraph Conditional Routing)** detects budget overruns and executes bounded revisions to align scope with financial limits.
-4. **Agent 3 (Promotional Content Agent)** creates platform-tailored marketing copy based strictly on verified event facts.
+AgentFlow AI is a production-grade, autonomous multi-agent task automation system designed to solve complex multi-step user tasks. It features real conditional routing, structured task decomposition, dynamic step-by-step synthesis, and an automated **Self-Correction Quality Loop** that guarantees high-fidelity deliverables.
 
 ---
 
-## 2. System Architecture
+## Architecture Overview
 
 ```mermaid
 graph TD
-    User([Event Organizer]) --> Frontend[Next.js + TypeScript + Tailwind + Recharts]
-    Frontend -->|REST API + JWT| Backend[FastAPI Application Server]
-
-    subgraph Backend Core
-        Auth[JWT Auth & BCrypt Security]
-        EventService[Event Management & Extraction Service]
-        ProposalService[PDF & DOCX Generator Engine]
-        DB[(MongoDB / Motor Async / Memory Fallback)]
-    end
-
-    subgraph LangGraph Multi-Agent Workflow
-        Validate[Validate Requirements Node]
-        Planner[Agent 1: Event Planning Agent]
-        Budget[Agent 2: Budget Estimation Agent]
-        EvalBudget{Evaluate Budget Limit}
-        RevisePlan[Revise Event Plan Node]
-        RecalcBudget[Recalculate Budget Node]
-        Promo[Agent 3: Promotional Content Agent]
-        ValidateProposal[Validate Final Proposal Node]
-        SaveResults[Persist Results to Database]
-
-        Validate --> Planner
-        Planner --> Budget
-        Budget --> EvalBudget
-        EvalBudget -->|Over budget & revisions < max| RevisePlan
-        RevisePlan --> RecalcBudget
-        RecalcBudget --> EvalBudget
-        EvalBudget -->|Within budget or max revisions reached| Promo
-        Promo --> ValidateProposal
-        ValidateProposal --> SaveResults
-    end
-
-    Backend --> LangGraph
-    Backend --> DB
-    ProposalService --> ReportLab[ReportLab PDF Engine]
-    ProposalService --> DocxEngine[python-docx Engine]
-```
-
----
-
-## 3. Multi-Agent Workflow
-
-```mermaid
-sequenceDiagram
-    autonumber
-    actor Organizer
-    participant API as FastAPI Backend
-    participant Graph as LangGraph Orchestrator
-    participant A1 as Planning Agent
-    participant A2 as Budget Agent
-    participant A3 as Promotional Agent
-    participant DB as MongoDB / Storage
-
-    Organizer->>API: Submit Event Prompt / Form
-    API->>Graph: Trigger Workflow (Typed State)
-    Graph->>A1: plan_event()
-    A1-->>Graph: Master Schedule, Tasks, Risks, Equipment
-    Graph->>A2: estimate_budget()
-    A2-->>Graph: Deterministic Line Items & Subtotal
+    Start([START]) --> Planner[Planner Agent<br/>Gemini 3.8 Flash]
+    Planner --> |Decomposes into 4-6 Steps| Executor[Execution Agent<br/>Gemini 3.8 Flash]
+    Executor --> |Synthesizes Comprehensive Deliverable| Reviewer[Reviewer Agent<br/>Gemini 3.8 Flash]
     
-    rect rgb(30, 41, 59)
-        Note over Graph,A2: Conditional Budget Evaluation Edge
-        alt Total Cost > Available Budget Limit
-            Graph->>A1: revise_event_plan(feedback)
-            A1-->>Graph: Revised Scope
-            Graph->>A2: recalculate_budget()
-            A2-->>Graph: Updated Financials
-        end
-    end
-
-    Graph->>A3: generate_promotional_content()
-    A3-->>Graph: Instagram, LinkedIn, WhatsApp, Email, Poster, Calendar
-    Graph->>DB: save_results() (Version 1 Artifacts)
-    Graph-->>API: Completion Status (100%)
-    API-->>Organizer: Live Generation Preview & Proposal Downloads
+    Reviewer --> |Evaluates Completeness, Correctness, Clarity| Conditional{Quality Score >= 8?}
+    
+    Conditional --> |Score >= 8<br/>[APPROVED]| End([END: Final Output])
+    Conditional --> |Score < 8 AND Iteration < 3<br/>[REVISE]| LoopEdge[Self-Correction Router]
+    LoopEdge --> |Passes Reviewer Critique & Missing Requirements| Executor
+    Conditional --> |Iteration >= 3<br/>[MAX ATTEMPTS]| End
+    
+    style Start fill:#f3e8ff,stroke:#7c3aed,stroke-width:2px;
+    style Planner fill:#ede9fe,stroke:#6d28d9,stroke-width:2px;
+    style Executor fill:#e0e7ff,stroke:#4338ca,stroke-width:2px;
+    style Reviewer fill:#fef3c7,stroke:#d97706,stroke-width:2px;
+    style Conditional fill:#fef08a,stroke:#ca8a04,stroke-width:2px;
+    style End fill:#d1fae5,stroke:#059669,stroke-width:2px;
+    style LoopEdge fill:#fee2e2,stroke:#dc2626,stroke-width:2px,stroke-dasharray: 5 5;
 ```
 
 ---
 
-## 4. Key Features
+## Agent Roles & Shared State
 
-- **Multi-Agent Orchestration**: Powered by LangGraph StateGraph with shared typed state, error recovery, and bounded revision loops (max 2 attempts).
-- **100% Deterministic Financial Arithmetic**:
-  - Safe Python `Decimal` computations: `line_total = quantity * unit_cost`, `subtotal = sum(line_total)`, `contingency = subtotal * contingency_rate`.
-  - Division-by-zero protection.
-  - Zero hallucinated LLM math.
-  - Automated Economy, Standard, and Premium scenario generation.
-  - Actionable cost-cutting alternatives with trade-off explanations.
-- **Natural Language Requirements Extractor**: Form autofill powered by intelligent entity extraction parsing attendees, budgets, cities, dates, and activities.
-- **Interactive Budget Analytics**: Dynamic category pie charts and scenario comparison bar charts powered by **Recharts**.
-- **Actionable Task Register**: Interactive milestone tracking with priority badges, role assignments, and live status toggle.
-- **Omni-Channel Marketing Studio**: In-place editable copy, copy-to-clipboard, tone selector (Formal, Professional, Energetic, Casual), and poster canvas preview.
-- **Document Generation**: Instant one-click export of consolidated proposals to styled **PDF** (ReportLab) and **Word DOCX** (python-docx).
-- **High-Fidelity Demo Mode**: Deterministic domain intelligence engine that works out-of-the-box without paid API keys.
-- **Fault-Tolerant Storage**: Motor async MongoDB driver with automatic fallback to memory/disk store if local mongod is offline.
+### 1. Planner Agent (`backend/agents.py`)
+- **Model**: Google Gemini (`gemini-3.8-flash`)
+- **Function**: Ingests user directives, isolates core goals and quality requirements, and deconstructs the problem into 4–6 concrete, logical, sequential milestones.
+- **Output**: Structured JSON containing `identified_objectives`, `target_requirements`, and `steps` (step number, title, description, and deliverable).
+
+### 2. Execution Agent (`backend/agents.py`)
+- **Model**: Google Gemini
+- **Function**: Executes each planned milestone in depth, providing exhaustive solutions, structured code snippets, implementation roadmaps, or architectural guidelines.
+- **Self-Correction**: On revision cycles (iteration > 1), it reads the Reviewer Agent's previous critique, missing items, and improvement suggestions to revise and elevate the solution.
+
+### 3. Reviewer Agent (`backend/agents.py`)
+- **Model**: Google Gemini
+- **Function**: Serves as a strict Quality Assurance auditor evaluating outputs against:
+  1. *Task Completeness* (all plan steps addressed)
+  2. *Factual & Technical Correctness*
+  3. *Relevance to Prompt*
+  4. *Clarity, Organization & Polish*
+  5. *Plan Adherence*
+- **Scoring & Threshold**: 1–10 integer score. If `score >= 8`, decision is **APPROVE**. If `score < 8`, decision is **REVISE**.
+
+### 4. Shared LangGraph State (`backend/state.py`)
+```python
+class AgentFlowState(TypedDict):
+    user_task: str
+    plan: Optional[PlanOutput]
+    execution: str
+    review: Optional[ReviewOutput]
+    score: int                     # 1 to 10
+    feedback: str                  # Constructive critique
+    missing_requirements: List[str]# Specific missing elements
+    improvement_suggestions: List[str] # Actionable fixes
+    iteration: int                 # 1, 2, or 3
+    status: str                    # PLANNING, EXECUTING, REVIEWING, APPROVED, REVISING
+    execution_logs: List[LogEntry] # Progressive timeline entries
+    error: Optional[str]
+```
 
 ---
 
-## 5. Technology Stack
+## Project Structure
 
-### Frontend
-- **Framework**: Next.js 16+ (App Router), React 18, TypeScript
-- **Styling**: Tailwind CSS with custom dark mode design system
-- **Charts**: Recharts
-- **Icons**: Lucide React
-- **Forms & Validation**: React Hook Form, Zod
-
-### Backend
-- **Framework**: Python 3.12, FastAPI, Uvicorn
-- **Orchestration**: LangGraph StateGraph, LangChain Core
-- **AI / LLM Integration**: Official OpenAI SDK with Demo Mode fallback
-- **Validation**: Pydantic v2 & Pydantic Settings
-- **Database**: MongoDB with Motor (AsyncIO) & PyMongo
-- **Document Export**: ReportLab (PDF), python-docx (DOCX)
-- **Security**: PyJWT, BCrypt password hashing
-- **Testing**: Pytest, Pytest-Asyncio, HTTPX
-
----
-
-## 6. Project Directory Structure
-
-```text
-eventmind-ai/
-├── frontend/
-│   ├── app/
-│   │   ├── layout.tsx                     # Root dark-mode layout with Suspense boundaries
-│   │   ├── globals.css                    # Tailwind CSS v4 styling & theme tokens
-│   │   ├── page.tsx                       # Page 1: Landing Page
-│   │   ├── dashboard/
-│   │   │   └── page.tsx                   # Page 2: Dashboard with portfolio KPIs & search
-│   │   └── events/
-│   │       ├── create/
-│   │       │   └── page.tsx               # Page 3: Create Event with AI Autofill
-│   │       └── [id]/
-│   │           ├── page.tsx               # Page 8: Event Details & Export Hub
-│   │           ├── workspace/
-│   │           │   └── page.tsx           # Page 4: AI Generation Workspace & Live Agents
-│   │           ├── plan/
-│   │           │   └── page.tsx           # Page 5: Master Schedule Timeline & Tasks
-│   │           ├── budget/
-│   │           │   └── page.tsx           # Page 6: Budget Dashboard with Recharts
-│   │           └── marketing/
-│   │               └── page.tsx           # Page 7: Marketing Studio across platforms
-│   ├── components/
-│   │   ├── Navbar.tsx                     # Navigation header
-│   │   └── Footer.tsx                     # SaaS footer
-│   ├── lib/
-│   │   └── api.ts                         # Centralized TypeScript API client
-│   ├── package.json
-│   ├── Dockerfile
-│   └── tsconfig.json
+```
+agentflow-ai/
 ├── backend/
-│   ├── app/
-│   │   ├── main.py                        # FastAPI application entrypoint & lifespan
-│   │   ├── core/
-│   │   │   ├── config.py                  # Pydantic Settings
-│   │   │   └── security.py                # JWT & BCrypt password hashing
-│   │   ├── database/
-│   │   │   └── connection.py              # MongoDB Motor client + In-Memory fallback
-│   │   ├── schemas/
-│   │   │   ├── event.py                   # Event Pydantic models
-│   │   │   ├── plan.py                    # Event Planning Agent schemas
-│   │   │   ├── budget.py                  # Budget Estimation Agent schemas
-│   │   │   ├── promotion.py               # Promotional Content schemas
-│   │   │   ├── workflow.py                # Generation Job schemas
-│   │   │   └── auth.py                    # User authentication schemas
-│   │   ├── agents/
-│   │   │   ├── llm_provider.py            # Unified LLM provider & Demo Mode engine
-│   │   │   ├── planner.py                 # Agent 1: Event Planning Agent
-│   │   │   ├── budget_agent.py            # Agent 2: Budget Estimation Agent
-│   │   │   └── promotion_agent.py         # Agent 3: Promotional Content Agent
-│   │   ├── workflows/
-│   │   │   ├── state.py                   # Typed Workflow State
-│   │   │   └── graph.py                   # LangGraph StateGraph & bounded revision loop
+│   ├── main.py              # FastAPI app, SSE streaming endpoints, background worker
+│   ├── agents.py            # Planner, Execution, Reviewer Gemini agents
+│   ├── graph.py             # LangGraph StateGraph, conditional routing logic
+│   ├── state.py             # TypedDict shared state schema
+│   ├── requirements.txt     # Backend Python dependencies
+│   ├── .env.example         # Template for environment variables
+├── frontend/
+│   ├── src/
+│   │   ├── components/
+│   │   │   ├── Navbar.jsx               # Header with API status & model badge
+│   │   │   ├── ApiKeyModal.jsx          # Secure in-browser Gemini API key setup
+│   │   │   ├── TaskInput.jsx            # Dynamic textarea, presets, validation
+│   │   │   ├── WorkflowVisualization.jsx# Interactive LangGraph node graph & loop
+│   │   │   ├── AgentStatusCards.jsx     # Live agent gauges, metrics & state
+│   │   │   ├── PlanStepsView.jsx        # Numbered step cards & deliverables
+│   │   │   ├── ExecutionLogs.jsx        # Real-time SSE telemetry log panel
+│   │   │   └── FinalOutputDashboard.jsx # Formatted deliverable, audit & export
 │   │   ├── services/
-│   │   │   ├── budget_service.py          # Deterministic Decimal calculation engine
-│   │   │   └── proposal_service.py        # ReportLab PDF & python-docx export engine
-│   │   ├── api/
-│   │   │   └── routes/
-│   │   │       ├── health.py              # GET /api/health
-│   │   │       ├── auth.py                # POST /api/auth/register, /login, /me
-│   │   │       ├── events.py              # CRUD & /extract-prompt
-│   │   │       ├── workflow.py            # /generate, /generation-status, /recalculate
-│   │   │       ├── tasks.py               # Task register & status updates
-│   │   │       ├── promotion.py           # Promotion copy retrieval & editing
-│   │   │       └── proposals.py           # PDF/DOCX proposal streaming
-│   │   └── tests/                         # Pytest test suite (17 passed)
-│   ├── requirements.txt
-│   ├── pytest.ini
-│   ├── .env.example
-│   └── Dockerfile
-├── docker-compose.yml
-├── .env.example
-├── .gitignore
-└── README.md
+│   │   │   └── api.js                   # Axios client & SSE stream connector
+│   │   ├── App.jsx                      # Main dashboard application
+│   │   ├── index.css                    # Tailwind CSS & custom styling
+│   │   └── main.jsx                     # React root mount
+│   ├── package.json
+│   ├── tailwind.config.js
+│   ├── vite.config.js
+├── README.md
+└── .gitignore
 ```
 
 ---
 
-## 7. Prerequisites
+## Installation & Setup
 
-- **Python**: 3.12+
-- **Node.js**: 20+
-- **npm**: 10+
-- **Docker & Docker Compose** (Optional for containerized run)
-
----
-
-## 8. Installation & Local Development Setup
-
-### Step 1: Clone Repository & Configure Environment
-```bash
-git clone <repo-url>
-cd eventmind-ai
-cp .env.example .env
-```
-
-### Step 2: Backend Setup
-```bash
-cd backend
-python -m venv .venv
-
-# On Windows:
-.\.venv\Scripts\activate
-# On Linux/macOS:
-source .venv/bin/activate
-
-pip install -r requirements.txt
-```
-
-### Step 3: Frontend Setup
-```bash
-cd ../frontend
-npm install
-```
+### Prerequisites
+- Python 3.10+
+- Node.js 18+ and npm
 
 ---
 
-## 9. Running the Application Locally
+### Step 1: Configure Google Gemini API Key
 
-### Launch Backend Server
-```bash
-cd backend
-# Windows:
-.\.venv\Scripts\python.exe -m uvicorn app.main:app --host 127.0.0.1 --port 8000 --reload
-# Linux/macOS:
-uvicorn app.main:app --host 127.0.0.1 --port 8000 --reload
-```
-- API Base: `http://localhost:8000`
-- Swagger UI Documentation: `http://localhost:8000/api/docs`
-
-### Launch Frontend Application
-```bash
-cd frontend
-npm run dev
-```
-- Web Application: `http://localhost:3000`
+1. Obtain a free API key from **[Google AI Studio](https://aistudio.google.com/app/apikey)**.
+2. In the `backend` directory, create a `.env` file from the example:
+   ```bash
+   cd agentflow-ai/backend
+   cp .env.example .env
+   ```
+3. Set your API key inside `backend/.env`:
+   ```ini
+   GEMINI_API_KEY=AIzaSy...your_actual_key...
+   GEMINI_MODEL=gemini-3.8-flash
+   HOST=0.0.0.0
+   PORT=8000
+   ```
+*(Note: You can also enter the Gemini API key directly in the web UI via the **"Configure API Key"** button).*
 
 ---
 
-## 10. Docker Deployment
+### Step 2: Backend Setup & Execution
 
-Deploy the entire stack (MongoDB + FastAPI + Next.js) with a single command:
-```bash
-docker compose up --build
-```
-- Frontend: `http://localhost:3000`
-- Backend API: `http://localhost:8000/api/docs`
-- MongoDB: `localhost:27017`
+1. Navigate to the backend directory:
+   ```bash
+   cd agentflow-ai/backend
+   ```
+2. (Optional) Create and activate a virtual environment:
+   ```bash
+   python -m venv venv
+   # On Windows:
+   .\venv\Scripts\activate
+   # On Linux / macOS:
+   source venv/bin/activate
+   ```
+3. Install dependencies:
+   ```bash
+   pip install -r requirements.txt
+   ```
+4. Start the FastAPI server:
+   ```bash
+   python main.py
+   # Or with uvicorn directly:
+   uvicorn main:app --host 0.0.0.0 --port 8000 --reload
+   ```
+   The backend API will be live at `http://localhost:8000`.  
+   API Documentation is available at `http://localhost:8000/docs`.
 
 ---
 
-## 11. Environment Configuration Reference
+### Step 3: Frontend Setup & Execution
 
-| Variable | Description | Default |
-| :--- | :--- | :--- |
-| `MONGODB_URI` | MongoDB connection string | `mongodb://localhost:27017` |
-| `MONGODB_DATABASE` | Database name | `eventmind_ai` |
-| `OPENAI_API_KEY` | OpenAI API Key (Optional) | `""` (Activates Demo Mode) |
-| `OPENAI_MODEL` | Target language model | `gpt-4o-mini` |
-| `AI_DEMO_MODE` | Force deterministic demo synthesis | `true` |
-| `JWT_SECRET_KEY` | Random secret key for JWT signing | `replace_in_production` |
-| `ACCESS_TOKEN_EXPIRE_MINUTES` | Token expiration duration | `1440` (24 Hours) |
-| `MAX_REVISION_COUNT` | LangGraph budget revision attempts | `2` |
-| `NEXT_PUBLIC_API_URL` | Frontend API target | `http://localhost:8000/api` |
+1. Open a new terminal and navigate to `frontend`:
+   ```bash
+   cd agentflow-ai/frontend
+   ```
+2. Install packages:
+   ```bash
+   npm install
+   ```
+3. Launch the Vite development server:
+   ```bash
+   npm run dev
+   ```
+4. Open your browser and navigate to:
+   ```
+   http://localhost:5173
+   ```
 
 ---
 
-## 12. REST API Documentation
+## REST & SSE API Reference
 
 | Method | Endpoint | Description |
-| :--- | :--- | :--- |
-| `GET` | `/api/health` | Service health, DB connectivity & AI provider mode |
-| `POST` | `/api/events` | Create new event draft |
-| `GET` | `/api/events` | List all organized events (auto-seeds TechFest 2026 demo) |
-| `GET` | `/api/events/{id}` | Retrieve event details by ID |
-| `PATCH` | `/api/events/{id}` | Update event parameters |
-| `DELETE` | `/api/events/{id}` | Delete event and related plan, budget, & promotions |
-| `POST` | `/api/events/extract-prompt` | AI natural-language prompt requirements extractor |
-| `POST` | `/api/events/{id}/generate` | Trigger LangGraph multi-agent orchestration |
-| `GET` | `/api/events/{id}/generation-status` | Real-time agent status tracker & output previews |
-| `POST` | `/api/events/{id}/regenerate-plan` | Regenerate timeline and schedule |
-| `POST` | `/api/events/{id}/recalculate-budget` | Recalculate line items, subtotal, and contingency |
-| `POST` | `/api/events/{id}/regenerate-promotion` | Regenerate platform copy by tone and audience |
-| `GET` | `/api/events/{id}/tasks` | Retrieve task register |
-| `PATCH` | `/api/events/{id}/tasks/{task_id}` | Update task status, priority, or deadline |
-| `GET` | `/api/events/{id}/promotion` | Get multi-platform marketing copy |
-| `PATCH` | `/api/events/{id}/promotion` | Save custom edits to marketing copy |
-| `GET` | `/api/events/{id}/proposal/download` | Download PDF or Word (.docx) proposal |
+|---|---|---|
+| `GET` | `/api/workflow/health` | Verifies server health, active Gemini model, and API key status. |
+| `POST` | `/api/workflow/run` | Accepts user task and initiates background LangGraph workflow. Returns `workflow_id`. |
+| `GET` | `/api/workflow/stream/{workflow_id}` | Server-Sent Events (SSE) stream delivering real-time agent transitions, node events, and logs. |
+| `GET` | `/api/workflow/status/{workflow_id}` | Polls the current snapshot of a workflow state. |
 
 ---
 
-## 13. Automated Test Suite
+## Practical Examination Demonstration Instructions
 
-The test suite covers deterministic arithmetic, Pydantic schemas, agent outputs, LangGraph workflow execution, and REST endpoints.
+Follow this step-by-step script for an outstanding practical examination demo:
 
-Run tests using pytest:
-```bash
-cd backend
-.\.venv\Scripts\pytest.exe -v
-```
+### 1. Verification of System Health
+- Open `http://localhost:5173`.
+- Notice the **"Gemini API: Ready"** indicator in the navbar and the active model badge (`gemini-3.8-flash`).
+- Click **"Configure API Key"** in the top navigation to demonstrate client-side credential configuration with secure masking.
 
-### Test Results:
-```text
-============================= test session starts =============================
-platform win32 -- Python 3.12.10, pytest-9.2.0, pluggy-1.7.0
-configfile: pytest.ini
-collected 17 items
+### 2. Executing a Multi-Step Directive
+- Select one of the quick example prompts, e.g.:
+  > *"Create a 7-day Generative AI learning roadmap for a beginner with hands-on daily milestones and recommended resources."*
+- Click **"Execute LangGraph Workflow"** (or press <kbd>Ctrl + Enter</kbd>).
 
-app/tests/test_agents.py::test_planning_agent_generates_valid_structure PASSED [  5%]
-app/tests/test_agents.py::test_budget_agent_uses_deterministic_calculations PASSED [ 11%]
-app/tests/test_agents.py::test_promotional_agent_consistency_and_placeholders PASSED [ 17%]
-app/tests/test_api.py::test_health_endpoint PASSED                       [ 23%]
-app/tests/test_api.py::test_events_crud_and_validation PASSED            [ 29%]
-app/tests/test_api.py::test_natural_language_extraction PASSED           [ 35%]
-app/tests/test_budget_arithmetic.py::test_calculate_line_item_valid PASSED [ 41%]
-app/tests/test_budget_arithmetic.py::test_calculate_line_item_rejects_invalid PASSED [ 47%]
-app/tests/test_budget_arithmetic.py::test_budget_deterministic_calculation_within_limit PASSED [ 52%]
-app/tests/test_budget_arithmetic.py::test_budget_overrun_detection PASSED [ 58%]
-app/tests/test_budget_arithmetic.py::test_division_by_zero_protection PASSED [ 64%]
-app/tests/test_budget_arithmetic.py::test_scenario_generation PASSED     [ 70%]
-app/tests/test_schemas.py::test_event_create_validation_success PASSED   [ 76%]
-app/tests/test_schemas.py::test_event_create_validation_rejects_negative_budget PASSED [ 82%]
-app/tests/test_schemas.py::test_line_item_validation_rejects_zero_quantity PASSED [ 88%]
-app/tests/test_workflow.py::test_workflow_execution_end_to_end PASSED    [ 94%]
-app/tests/test_workflow.py::test_evaluate_budget_condition_bounded_revisions PASSED [100%]
+### 3. Observing the Real-Time Multi-Agent Workflow
+1. **Interactive Workflow Diagram**:
+   - The **Planner Agent** node pulses indigo as it calls Gemini to decompose the task.
+   - Once completed, the node turns green with a checkmark, and the **Planner Blueprint** displays 4–6 numbered milestone cards with explicit deliverables.
+2. **Execution Agent Synthesis**:
+   - The **Execution Agent** node activates. The live telemetry logs stream each stage of synthesis.
+   - The formatted deliverable is generated with comprehensive depth.
+3. **Reviewer Agent Quality Audit**:
+   - The **Reviewer Agent** node activates to evaluate completeness, accuracy, clarity, and adherence.
+   - The live score meter updates (e.g., `8/10` or `9/10` with `[APPROVED]`, or `7/10` with `[REVISE]`).
 
-============================= 17 passed in 2.43s ==============================
-```
+### 4. Demonstrating the Self-Correction Loop
+- If the Reviewer evaluates the initial attempt with a score < 8, observe:
+  - The **LangGraph Self-Correction Edge** triggers.
+  - A `self_correction_triggered` event is logged in the telemetry terminal.
+  - The **Execution Agent** starts **Attempt #2**, explicitly incorporating the reviewer's missing criteria and feedback to produce a superior version.
 
----
-
-## 14. Demo Event: TechFest 2026
-
-The platform comes pre-seeded with the canonical demo event:
-- **Event Name**: TechFest 2026
-- **Type**: Technical College Festival
-- **Location**: Pune, Maharashtra
-- **Attendees**: 500 Students & Delegates
-- **Authorized Budget**: ₹2,00,000 (INR)
-- **Features**: Master schedule, itemized budget across 13 categories, 10% safety contingency buffer, 3 tier scenarios, task register, Instagram reels script, LinkedIn announcement, WhatsApp broadcast, and downloadable PDF & DOCX proposals.
-
----
-
-## 15. Security & Reliability
-
-- **Zero Floating-Point Drift**: All financials handled via safe Decimal calculations.
-- **Fail-Safe Database**: Automatic fallback to in-memory store prevents application crashes when MongoDB is not running locally.
-- **No Secrets in Source**: All API keys, database credentials, and JWT secrets are managed strictly through environment variables.
-- **Input Sanitization**: Strict Pydantic schema validation rejects negative costs, zero quantities, and malformed inputs.
-- **Bounded Revision Loops**: LangGraph enforces a hard limit of 2 optimization attempts to eliminate potential infinite loops.
-
----
-
-## 16. License
-
-This project is released under the **MIT License**.
+### 5. Final Report Dashboard & Deliverable Export
+- Once approved (Score >= 8), a confetti animation triggers.
+- Inspect the **Final Output Dashboard**:
+  - Reviewer score gauge and critique analysis.
+  - Formatted markdown preview.
+  - Click **"Copy Solution"** to copy markdown output to clipboard.
+  - Click **"Download Report"** to export an audit report text file.
+  - Click **"New Task"** to reset and test another directive.
