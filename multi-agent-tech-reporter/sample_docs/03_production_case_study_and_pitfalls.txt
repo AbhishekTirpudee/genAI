@@ -1,0 +1,17 @@
+# Document 3: Enterprise Production Case Studies, Limitations & Anti-Patterns
+# Source: High-Scale Cloud Engineering Consortium Report (2025)
+
+1. Enterprise Production Case Studies:
+- Fastly (Compute@Edge): Deployed Lucet and Wasmtime across thousands of edge points-of-presence (PoPs). Running over 100 billion Wasm requests daily with sub-millisecond execution overhead.
+- Cloudflare Workers: Leverages V8 WebAssembly engine for low-latency edge computing and zero-latency routing rules.
+- Adobe Photoshop for Web: Transitioned entire C++ desktop image processing codebase into browser and server WebAssembly components, retaining 90% of native C++ CPU performance.
+
+2. Known Limitations & Technical Anti-Patterns:
+When NOT to use WebAssembly:
+- Complex Multi-threading with Shared Memory: Although threads exist via WebAssembly threads proposal, debugging race conditions and distributed locks across WASI components is significantly more complex than native POSIX threads.
+- Legacy Enterprise Monoliths: Legacy software heavily coupled to Linux kernel syscalls (e.g., direct ioctl, raw sockets, fork/exec, or specific /proc filesystem files) cannot run under WASI without substantial refactoring.
+- Heavy Garbage-Collected Languages: Running Python, Ruby, or Java inside Wasm requires compiling the entire interpreter runtime into the Wasm bundle, inflating payload size from 2MB to 30MB+ and slowing startup time. Rust, Go, and C++ remain the primary first-class targets.
+
+3. Debugging & Tooling Gaps:
+- Core dumps and post-mortem stack trace tools are less mature than Linux gdb and valgrind.
+- Observability requires custom OpenTelemetry instrumentation adapters.
