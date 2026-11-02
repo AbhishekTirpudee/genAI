@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ElectroRAG - Electronic Component Catalogue Assistant</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&family=Outfit:wght@500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <!-- Top Navigation Header -->
+  <header class="app-header">
+    <div class="brand-wrapper">
+      <div class="brand-icon">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="4" y="4" width="16" height="16" rx="2"/>
+          <rect x="9" y="9" width="6" height="6"/>
+          <line x1="9" y1="1" x2="9" y2="4"/>
+          <line x1="15" y1="1" x2="15" y2="4"/>
+          <line x1="9" y1="20" x2="9" y2="23"/>
+          <line x1="15" y1="20" x2="15" y2="23"/>
+          <line x1="20" y1="9" x2="23" y2="9"/>
+          <line x1="20" y1="14" x2="23" y2="14"/>
+          <line x1="1" y1="9" x2="4" y2="9"/>
+          <line x1="1" y1="14" x2="4" y2="14"/>
+        </svg>
+      </div>
+      <div>
+        <div class="brand-title">
+          ElectroRAG <span class="brand-badge">CATALOGUE ASSISTANT</span>
+        </div>
+        <div class="brand-subtitle">Grounded Electronic Component Intelligence • Specifications, Applications & Prices</div>
+      </div>
+    </div>
+
+    <div class="header-actions">
+      <div class="status-pill" id="statusPill">
+        <span class="status-dot"></span>
+        <span id="statusText">Hybrid RAG Ready</span>
+      </div>
+      <button class="btn-icon-text" id="openSettingsBtn">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+        <span>Model & API Settings</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- Main Container -->
+  <div class="app-container">
+    
+    <!-- Left Sidebar: Component Catalogue Explorer -->
+    <aside class="sidebar">
+      <div class="sidebar-header">
+        <div class="sidebar-title-row">
+          <span class="sidebar-title">Catalogue Index</span>
+          <span class="sidebar-count" id="componentCount">14 Components</span>
+        </div>
+
+        <!-- Upload Dropzone -->
+        <label class="upload-card" id="dropZone">
+          <input type="file" id="catalogueFileInput" accept=".json,.csv,.txt" style="display: none;">
+          <div class="upload-icon">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+          </div>
+          <div class="upload-text"><strong>Upload Catalogue</strong> (JSON / CSV)<br>Auto-updates RAG Index</div>
+        </label>
+
+        <!-- Search Bar -->
+        <div class="search-box">
+          <svg class="search-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+          <input type="text" class="search-input" id="catalogueSearchInput" placeholder="Filter by MPN (e.g. ESP32, LM358)...">
+        </div>
+
+        <!-- Category Filters -->
+        <div class="category-filter-pills" id="categoryFilters">
+          <button class="cat-pill active" data-cat="all">All</button>
+          <button class="cat-pill" data-cat="Microcontrollers">Microcontrollers</button>
+          <button class="cat-pill" data-cat="Power">Power Regulators</button>
+          <button class="cat-pill" data-cat="Sensors">Sensors</button>
+          <button class="cat-pill" data-cat="Analog">Analog / Op-Amps</button>
+          <button class="cat-pill" data-cat="Discrete">Discretes</button>
+        </div>
+      </div>
+
+      <!-- Component List Cards -->
+      <div class="component-list" id="componentList">
+        <!-- Rendered via JS -->
+      </div>
+    </aside>
+
+    <!-- Right Main Chat Interface -->
+    <main class="chat-container">
+      <div class="chat-history" id="chatHistory">
+        <!-- Welcome Hero Banner -->
+        <div class="welcome-hero" id="welcomeHero">
+          <h1 class="welcome-title">Electronic Component Technical Assistant</h1>
+          <p class="welcome-desc">
+            Ask complex queries about electrical specifications, pinouts, operating voltage ranges, practical circuit applications, and volume pricing breaks directly from the indexed component catalogue.
+          </p>
+
+          <div class="prompt-suggestions-title">⚡ Instant Queries for Testing</div>
+          <div class="suggestions-grid">
+            <button class="suggestion-chip" data-query="What is the operating voltage, pinout, and price of LM358 op-amp?">
+              <span>🔬</span> What is the operating voltage and price of LM358?
+            </button>
+            <button class="suggestion-chip" data-query="Compare specifications and prices of ESP32-WROOM-32 vs STM32F401">
+              <span>⚖️</span> Compare ESP32-WROOM-32 vs STM32F401
+            </button>
+            <button class="suggestion-chip" data-query="I need a 3.3V low dropout (LDO) regulator with price under $0.50">
+              <span>⚡</span> 3.3V LDO regulator with price under $0.50
+            </button>
+            <button class="suggestion-chip" data-query="Which sensors are capable of measuring both humidity and temperature?">
+              <span>🌡️</span> Sensors for measuring humidity & temperature
+            </button>
+            <button class="suggestion-chip" data-query="What are the volume pricing breaks for NE555 timer for 1000 pieces?">
+              <span>💰</span> Volume pricing breaks for NE555 timer
+            </button>
+            <button class="suggestion-chip" data-query="What is the maximum continuous current and package for IRFZ44N MOSFET?">
+              <span>🔌</span> Max current and package for IRFZ44N MOSFET
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Chat Input Area -->
+      <div class="chat-input-area">
+        <form class="input-container" id="chatForm">
+          <input type="text" class="chat-input" id="chatInput" placeholder="Ask about component specifications, applications, or prices..." autocomplete="off">
+          <button type="submit" class="send-btn" id="sendBtn" title="Send Query">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
+          </button>
+        </form>
+        <div class="input-hint">Hybrid RAG Pipeline Active: Exact MPN Boost + Semantic Vector Cosine Similarity + Table Extraction</div>
+      </div>
+    </main>
+
+  </div>
+
+  <!-- Component Detail Modal -->
+  <div class="modal-overlay" id="detailModal">
+    <div class="modal-box">
+      <div class="modal-header">
+        <h2 style="font-family: var(--font-heading); font-size: 1.25rem; color: var(--accent-cyan);" id="modalPartNumber">Component Details</h2>
+        <button class="modal-close-btn" id="closeDetailModalBtn">&times;</button>
+      </div>
+      <div id="modalDetailContent">
+        <!-- Rendered dynamically -->
+      </div>
+    </div>
+  </div>
+
+  <!-- Settings Modal (API Key & Model Selection) -->
+  <div class="modal-overlay" id="settingsModal">
+    <div class="modal-box" style="max-width: 500px;">
+      <div class="modal-header">
+        <h2 style="font-family: var(--font-heading); font-size: 1.15rem; color: #fff;">Model & Engine Configuration</h2>
+        <button class="modal-close-btn" id="closeSettingsModalBtn">&times;</button>
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 16px;">
+        <div>
+          <label style="display: block; font-size: 0.8rem; color: var(--text-muted); margin-bottom: 6px;">RAG Generation Mode</label>
+          <select id="engineModeSelect" style="width: 100%; background: #070a12; border: 1px solid var(--border-subtle); padding: 8px 12px; border-radius: 8px; color: #fff; font-size: 0.85rem;">
+            <option value="gemini">Google Gemini 1.5 / 2.0 Flash (Live LLM)</option>
+            <option value="offline" selected>Deterministic Hybrid RAG Engine (Zero API Key / Offline Lab Mode)</option>
+          </select>
+          <small style="display: block; color: var(--text-dim); margin-top: 4px; font-size: 0.72rem;">Offline Lab Mode generates grounded tables and pricing directly from indexed catalogue vectors without external API calls.</small>
+        </div>
+
+        <div>
+          <label style="display: block; font-size: 0.8rem; color: var(--text-muted); margin-bottom: 6px;">Google Gemini API Key (Optional)</label>
+          <input type="password" id="apiKeyInput" placeholder="AIzaSy..." style="width: 100%; background: #070a12; border: 1px solid var(--border-subtle); padding: 8px 12px; border-radius: 8px; color: #fff; font-size: 0.85rem;">
+          <small style="display: block; color: var(--text-dim); margin-top: 4px; font-size: 0.72rem;">Stored locally in browser localStorage for your session.</small>
+        </div>
+
+        <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 10px;">
+          <button class="btn-icon-text" id="saveSettingsBtn" style="background: linear-gradient(135deg, var(--accent-cyan), var(--accent-blue)); color: #070a12; font-weight: 600;">Save Settings</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
