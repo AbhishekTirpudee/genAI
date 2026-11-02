@@ -1,336 +1,338 @@
+import spacy
+import random
+from collections import defaultdict
 
-import streamlit as st
-import requests
-import pandas as pd
-import plotly.express as px
-import psutil
-import time
-import threading
-from datetime import datetime
-
-# PAGE CONFIGURATION
-st.set_page_config(
-    page_title="GenAI Performance Monitor",
-    page_icon="📊",
-    layout="wide"
-)
-
-st.title("📊 GenAI Model Performance Monitor")
-st.write("Monitor Llama 3.2 1B performance across multiple queries.")
-
-OLLAMA_URL = "http://localhost:11434"
-MODEL = "llama3.2:1b"
+# Load spaCy English model
+nlp = spacy.load("en_core_web_sm")
 
 
-# MEMORY MONITOR
-class MemoryMonitor:
+# ---------------------------------------------------------
+# 1. SPLIT PARAGRAPH INTO SENTENCES
+# ---------------------------------------------------------
 
-    def __init__(self):
-        self.peak = 0
-        self.running = False
+def split_sentences(paragraph):
+    doc = nlp(paragraph)
 
-    def get_memory(self):
-        total = 0
+    sentences = [sent.text.strip() for sent in doc.sents]
 
-        for p in psutil.process_iter(["name", "memory_info"]):
-            try:
-                name = (p.info["name"] or "").lower()
+    return sentences
 
-                if "ollama" in name:
-                    mem = p.info["memory_info"]
-                    if mem:
-                        total += mem.rss
 
-            except (psutil.NoSuchProcess, psutil.AccessDenied):
-                pass
+# ---------------------------------------------------------
+# 2. EXTRACT ENTITIES AND THEIR ROLES
+# ---------------------------------------------------------
 
-        return total / (1024 * 1024)
+def extract_sentence_roles(sentence):
 
-    def monitor(self):
-        while self.running:
-            current = self.get_memory()
-            self.peak = max(self.peak, current)
-            time.sleep(0.05)
+    doc = nlp(sentence)
 
-    def start(self):
-        self.peak = self.get_memory()
-        self.running = True
+    roles = {}
 
-        self.thread = threading.Thread(
-            target=self.monitor,
-            daemon=True
+    for token in doc:
+
+        # We consider nouns and proper nouns as entities
+        if token.pos_ in ["NOUN", "PROPN"]:
+
+            entity = token.text.lower()
+
+            # Subject
+            if token.dep_ in ["nsubj", "nsubjpass", "csubj"]:
+                role = "S"
+
+            # Object
+            elif token.dep_ in ["dobj", "obj", "pobj", "iobj"]:
+                role = "O"
+
+            # Other occurrence
+            else:
+                role = "X"
+
+            # If entity appears multiple times,
+            # prioritize Subject over Object over Other
+            if entity not in roles:
+                roles[entity] = role
+
+            else:
+                if role == "S":
+                    roles[entity] = "S"
+
+                elif role == "O" and roles[entity] == "X":
+                    roles[entity] = "O"
+
+    return roles
+
+
+# ---------------------------------------------------------
+# 3. BUILD ENTITY GRID
+# ---------------------------------------------------------
+
+def build_entity_grid(sentences):
+
+    sentence_roles = []
+
+    all_entities = set()
+
+    for sentence in sentences:
+
+        roles = extract_sentence_roles(sentence)
+
+        sentence_roles.append(roles)
+
+        all_entities.update(roles.keys())
+
+    # Sort entities alphabetically
+    entities = sorted(all_entities)
+
+    grid = []
+
+    for roles in sentence_roles:
+
+        row = []
+
+        for entity in entities:
+
+            if entity in roles:
+                row.append(roles[entity])
+            else:
+                row.append("-")
+
+        grid.append(row)
+
+    return entities, grid
+
+
+# ---------------------------------------------------------
+# 4. DISPLAY ENTITY GRID
+# ---------------------------------------------------------
+
+def display_grid(sentences, entities, grid):
+
+    print("\n" + "=" * 70)
+    print("ENTITY GRID")
+    print("=" * 70)
+
+    # Header
+    print(f"{'Sentence':<10}", end="")
+
+    for entity in entities:
+        print(f"{entity:<15}", end="")
+
+    print()
+
+    print("-" * (10 + 15 * len(entities)))
+
+    # Rows
+    for i, row in enumerate(grid):
+
+        print(f"S{i+1:<9}", end="")
+
+        for role in row:
+            print(f"{role:<15}", end="")
+
+        print()
+
+
+# ---------------------------------------------------------
+# 5. TRANSITION SCORING
+# ---------------------------------------------------------
+
+def transition_score(previous, current):
+
+    # Entity absent in either sentence
+    if previous == "-" or current == "-":
+        return 0
+
+    # Subject remains Subject
+    if previous == "S" and current == "S":
+        return 3
+
+    # Subject -> Object
+    if previous == "S" and current == "O":
+        return 2
+
+    # Object -> Subject
+    if previous == "O" and current == "S":
+        return 2
+
+    # Object -> Object
+    if previous == "O" and current == "O":
+        return 2
+
+    # Other -> Subject/Object
+    if previous == "X" and current in ["S", "O"]:
+        return 1
+
+    # Subject/Object -> Other
+    if previous in ["S", "O"] and current == "X":
+        return 1
+
+    # Other -> Other
+    if previous == "X" and current == "X":
+        return 1
+
+    return 0
+
+
+# ---------------------------------------------------------
+# 6. CALCULATE COHERENCE SCORE
+# ---------------------------------------------------------
+
+def calculate_coherence_score(grid):
+
+    if len(grid) < 2:
+        return 0
+
+    total_score = 0
+    transitions = 0
+
+    for i in range(len(grid) - 1):
+
+        current_sentence = grid[i]
+        next_sentence = grid[i + 1]
+
+        for previous_role, current_role in zip(
+            current_sentence,
+            next_sentence
+        ):
+
+            # Only count transitions where entity
+            # appears in both sentences
+            if previous_role != "-" and current_role != "-":
+
+                score = transition_score(
+                    previous_role,
+                    current_role
+                )
+
+                total_score += score
+
+                transitions += 1
+
+    if transitions == 0:
+        return 0
+
+    # Normalize score to 0-100
+    max_possible_score = transitions * 3
+
+    final_score = (total_score / max_possible_score) * 100
+
+    return round(final_score, 2)
+
+
+# ---------------------------------------------------------
+# 7. SHUFFLE SENTENCES
+# ---------------------------------------------------------
+
+def shuffle_sentences(sentences):
+
+    shuffled = sentences.copy()
+
+    random.shuffle(shuffled)
+
+    return shuffled
+
+
+# ---------------------------------------------------------
+# 8. MAIN PROGRAM
+# ---------------------------------------------------------
+
+def main():
+
+    print("\n" + "=" * 70)
+    print("ENTITY-GRID DISCOURSE COHERENCE SCORER")
+    print("=" * 70)
+
+    print("\nEnter your paragraph.")
+    print("Press ENTER after typing the paragraph.\n")
+
+    paragraph = input("Paragraph: ")
+
+    # ---------------------------------------------
+    # ORIGINAL PARAGRAPH
+    # ---------------------------------------------
+
+    sentences = split_sentences(paragraph)
+
+    print("\n\nORIGINAL PARAGRAPH")
+    print("-" * 70)
+
+    for i, sentence in enumerate(sentences):
+        print(f"S{i+1}: {sentence}")
+
+    entities, grid = build_entity_grid(sentences)
+
+    display_grid(sentences, entities, grid)
+
+    original_score = calculate_coherence_score(grid)
+
+    print("\nOriginal Coherence Score:",
+          original_score, "/ 100")
+
+    # ---------------------------------------------
+    # SHUFFLED PARAGRAPH
+    # ---------------------------------------------
+
+    shuffled = shuffle_sentences(sentences)
+
+    print("\n\nSHUFFLED PARAGRAPH")
+    print("-" * 70)
+
+    for i, sentence in enumerate(shuffled):
+        print(f"S{i+1}: {sentence}")
+
+    shuffled_entities, shuffled_grid = build_entity_grid(shuffled)
+
+    display_grid(
+        shuffled,
+        shuffled_entities,
+        shuffled_grid
+    )
+
+    shuffled_score = calculate_coherence_score(
+        shuffled_grid
+    )
+
+    print("\nShuffled Coherence Score:",
+          shuffled_score, "/ 100")
+
+    # ---------------------------------------------
+    # COMPARISON
+    # ---------------------------------------------
+
+    print("\n" + "=" * 70)
+    print("COMPARISON")
+    print("=" * 70)
+
+    print(f"Original Paragraph : {original_score}/100")
+    print(f"Shuffled Paragraph : {shuffled_score}/100")
+
+    difference = round(
+        original_score - shuffled_score,
+        2
+    )
+
+    print(f"Score Difference   : {difference}")
+
+    if difference > 0:
+        print(
+            "\nThe original sentence order has "
+            "more repeated entity transitions "
+            "according to this simplified model."
         )
-        self.thread.start()
 
-    def stop(self):
-        self.running = False
-        self.thread.join(timeout=2)
-
-        self.peak = max(self.peak, self.get_memory())
-        return round(self.peak, 2)
-
-
-# CHECK OLLAMA CONNECTION
-def check_connection():
-    response = requests.get(
-        OLLAMA_URL + "/api/tags",
-        timeout=5
-    )
-    response.raise_for_status()
-
-    models = response.json().get("models", [])
-    return [m["name"] for m in models]
-
-
-# PERFORMANCE MONITORING
-def run_test(prompt, max_tokens):
-
-    memory = MemoryMonitor()
-    memory.start()
-
-    start = time.perf_counter()
-
-    try:
-        response = requests.post(
-            OLLAMA_URL + "/api/generate",
-            json={
-                "model": MODEL,
-                "prompt": prompt,
-                "stream": False,
-                "options": {
-                    "num_predict": max_tokens,
-                    "temperature": 0.7
-                }
-            },
-            timeout=600
+    elif difference < 0:
+        print(
+            "\nThe shuffled sentence order has "
+            "more repeated entity transitions "
+            "according to this simplified model."
         )
 
-        response.raise_for_status()
-        result = response.json()
-
-        end = time.perf_counter()
-
-    finally:
-        peak_memory = memory.stop()
-
-    generated_text = result.get("response", "")
-
-    prompt_tokens = result.get("prompt_eval_count", 0)
-    generated_tokens = result.get("eval_count", 0)
-
-    inference_time = (
-        result.get("total_duration", 0) / 1_000_000_000
-    )
-
-    generation_time = (
-        result.get("eval_duration", 0) / 1_000_000_000
-    )
-
-    request_time = end - start
-
-    tps = (
-        generated_tokens / generation_time
-        if generation_time > 0 else 0
-    )
-
-    return {
-        "Prompt": prompt,
-        "Response": generated_text,
-        "Prompt Length": prompt_tokens,
-        "Generated Tokens": generated_tokens,
-        "Inference Time (s)": round(inference_time, 3),
-        "Request Time (s)": round(request_time, 3),
-        "Tokens Per Second": round(tps, 2),
-        "Peak Memory (MB)": peak_memory
-    }
-
-
-# SIDEBAR
-st.sidebar.header("Model Configuration")
-st.sidebar.write("Selected Model: Llama 3.2 1B")
-
-max_tokens = st.sidebar.slider(
-    "Maximum Output Tokens",
-    32, 512, 128
-)
-
-
-# CONNECTION STATUS
-st.header("1. Model Connection")
-
-try:
-    models = check_connection()
-
-    if MODEL in models:
-        st.success("Ollama Connected | Model Available")
     else:
-        st.error("Llama 3.2 1B is not installed.")
-
-except Exception:
-    st.error("Ollama is not connected. Start Ollama.")
-
-
-# QUERY INPUT
-st.divider()
-st.header("2. Enter Test Queries")
-
-default_text = """Explain Artificial Intelligence.
-
----
-
-What is Machine Learning?
-
----
-
-Explain Neural Networks.
-
----
-
-What is Generative AI?
-
----
-
-Explain Deep Learning with examples."""
-
-query_text = st.text_area(
-    "Enter prompts separated by ---",
-    value=default_text,
-    height=220
-)
-
-prompts = [
-    p.strip()
-    for p in query_text.split("---")
-    if p.strip()
-]
-
-st.write("Total queries:", len(prompts))
-
-
-# RUN TESTS
-if st.button("🚀 Run Performance Test", type="primary"):
-
-    results = []
-    progress = st.progress(0)
-    status = st.empty()
-
-    for i, prompt in enumerate(prompts):
-
-        status.info(
-            f"Processing query {i+1} of {len(prompts)}"
+        print(
+            "\nBoth versions received the same score."
         )
 
-        try:
-            result = run_test(prompt, max_tokens)
-            results.append(result)
 
-        except Exception as e:
-            st.error(f"Query {i+1} failed: {e}")
-
-        progress.progress((i+1) / len(prompts))
-
-    st.session_state["results"] = results
-
-    if results:
-        df = pd.DataFrame(results)
-        df["Timestamp"] = datetime.now()
-
-        df.to_csv(
-            "performance_results.csv",
-            index=False
-        )
-
-        st.success("Performance testing completed!")
-
-
-# DASHBOARD
-st.divider()
-st.header("3. Performance Dashboard")
-
-if "results" in st.session_state:
-
-    results = st.session_state["results"]
-
-    if results:
-
-        df = pd.DataFrame(results)
-
-        c1, c2, c3, c4 = st.columns(4)
-
-        c1.metric("Total Queries", len(df))
-
-        c2.metric(
-            "Avg Inference Time",
-            f"{df['Inference Time (s)'].mean():.2f} s"
-        )
-
-        c3.metric(
-            "Avg Tokens/Sec",
-            f"{df['Tokens Per Second'].mean():.2f}"
-        )
-
-        c4.metric(
-            "Peak Memory",
-            f"{df['Peak Memory (MB)'].max():.2f} MB"
-        )
-
-        st.subheader("Performance Results")
-
-        st.dataframe(
-            df.drop(columns=["Response", "Prompt"]),
-            use_container_width=True
-        )
-
-        st.subheader("Performance Analytics")
-
-        fig1 = px.bar(
-            df,
-            y="Inference Time (s)",
-            title="Inference Time per Query"
-        )
-
-        st.plotly_chart(fig1, use_container_width=True)
-
-        fig2 = px.bar(
-            df,
-            y="Tokens Per Second",
-            title="Tokens Per Second"
-        )
-
-        st.plotly_chart(fig2, use_container_width=True)
-
-        fig3 = px.bar(
-            df,
-            y="Peak Memory (MB)",
-            title="Peak Memory Usage"
-        )
-
-        st.plotly_chart(fig3, use_container_width=True)
-
-        st.subheader("Generated Responses")
-
-        for i, row in df.iterrows():
-
-            with st.expander(f"Query {i+1}"):
-
-                st.write("Prompt:", row["Prompt"])
-                st.write("Response:", row["Response"])
-
-        csv = df.to_csv(index=False).encode("utf-8")
-
-        st.download_button(
-            "Download Performance Report",
-            csv,
-            file_name="performance_report.csv",
-            mime="text/csv"
-        )
-
-    else:
-        st.warning("No successful test results.")
-
-else:
-    st.info("Run the tests to display performance results.")
-
-
-st.divider()
-st.caption("GenAI Model Performance Monitoring System")
+# Run program
+if __name__ == "__main__":
+    main()
