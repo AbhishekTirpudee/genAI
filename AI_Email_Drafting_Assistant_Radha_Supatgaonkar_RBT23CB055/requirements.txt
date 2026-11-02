@@ -1,0 +1,5 @@
+# Requirements for Local AI Email Drafting Assistant
+streamlit>=1.35.0
+requests>=2.31.0
+pyperclip>=1.8.2
+
