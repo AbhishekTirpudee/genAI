@@ -1,1 +1,1 @@
-# Database package.
+"""Backend implementation for MarketMind AI."""
