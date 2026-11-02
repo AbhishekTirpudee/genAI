@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Onyx — AI Career Architect & Job Matcher</title>
+    <link rel="icon" type="image/png" href="/static/img/logo.png">
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- Marked.js for Markdown Rendering -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <!-- Custom Stylesheet -->
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+    <div class="app-layout" id="appLayout">
+        <!-- Collapsible Sidebar -->
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <div class="brand">
+                    <img src="/static/img/logo.png" alt="Onyx Logo" class="brand-logo">
+                    <div class="brand-text">
+                        <span class="brand-name">Onyx</span>
+                        <span class="brand-badge">Career AI</span>
+                    </div>
+                </div>
+                <button class="icon-btn" id="collapseSidebarBtn" title="Collapse Sidebar">
+                    <i data-lucide="panel-left-close"></i>
+                </button>
+            </div>
+
+            <!-- New Chat / Analysis Button -->
+            <div class="sidebar-actions">
+                <button class="btn-new-chat" id="newChatBtn">
+                    <i data-lucide="plus"></i>
+                    <span>New Request</span>
+                </button>
+            </div>
+
+            <!-- Chat / Resume History List -->
+            <div class="sidebar-history-container">
+                <div class="history-label">Past Analyses & Requests</div>
+                <div class="history-list" id="historyList">
+                    <!-- Loaded dynamically from Neon DB -->
+                    <div class="history-loading">
+                        <div class="spinner-small"></div>
+                        <span>Loading history...</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Sidebar Footer -->
+            <div class="sidebar-footer">
+                <div class="status-indicator">
+                    <span class="pulse-dot"></span>
+                    <span class="status-text">Neon DB Connected</span>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Content Area -->
+        <main class="main-content">
+            <!-- Top Navigation Bar -->
+            <header class="top-bar">
+                <div class="top-bar-left">
+                    <button class="icon-btn" id="expandSidebarBtn" title="Expand Sidebar" style="display: none;">
+                        <i data-lucide="panel-left-open"></i>
+                    </button>
+                    <div class="active-title" id="activeChatTitle">New Career Analysis</div>
+                </div>
+                <div class="top-bar-right"></div>
+            </header>
+
+            <!-- Chat / Analysis Thread Area -->
+            <div class="chat-viewport" id="chatViewport">
+                <!-- Welcome Banner (visible on empty thread) -->
+                <div class="welcome-screen" id="welcomeScreen">
+                    <div class="welcome-icon-wrap">
+                        <img src="/static/img/logo.png" alt="Onyx" class="welcome-logo">
+                    </div>
+                    <h1 class="welcome-title">Where do you want your career to go?</h1>
+                    <p class="welcome-subtitle">
+                        Upload your resume and specify your target position. Onyx scans market requirements across industry sectors, highlights skill gaps, and suggests tailored improvements.
+                    </p>
+
+                    <div class="quick-starters">
+                        <div class="starter-card" data-role="Generative AI Engineer">
+                            <div class="starter-icon"><i data-lucide="cpu"></i></div>
+                            <div class="starter-info">
+                                <strong>Generative AI Engineer</strong>
+                                <span>Compare vs LLM, RAG & Agentic market demands</span>
+                            </div>
+                        </div>
+                        <div class="starter-card" data-role="Full Stack Developer">
+                            <div class="starter-icon"><i data-lucide="layers"></i></div>
+                            <div class="starter-info">
+                                <strong>Full Stack Developer</strong>
+                                <span>Evaluate modern frontend, microservices & cloud fit</span>
+                            </div>
+                        </div>
+                        <div class="starter-card" data-role="Machine Learning Researcher">
+                            <div class="starter-icon"><i data-lucide="brain"></i></div>
+                            <div class="starter-info">
+                                <strong>ML Researcher / Scientist</strong>
+                                <span>Check PyTorch, paper publications & modeling gaps</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Messages Feed -->
+                <div class="messages-container" id="messagesContainer"></div>
+            </div>
+
+            <!-- Bottom Floating Action Bar (Claude Style) -->
+            <div class="input-container-wrapper">
+                <!-- Attached Badges Tray -->
+                <div class="attachments-tray" id="attachmentsTray">
+                    <div class="badge-chip resume-chip" id="resumeBadge" style="display: none;">
+                        <i data-lucide="file-text"></i>
+                        <span id="resumeBadgeName">resume.pdf</span>
+                        <button type="button" class="chip-remove-btn" id="removeResumeBtn" title="Remove resume">
+                            <i data-lucide="x"></i>
+                        </button>
+                    </div>
+
+                    <div class="badge-chip position-chip" id="positionBadge" style="display: none;">
+                        <i data-lucide="briefcase"></i>
+                        <span id="positionBadgeTitle">AI Engineer</span>
+                        <button type="button" class="chip-remove-btn" id="removePositionBtn" title="Change position">
+                            <i data-lucide="x"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Main Input Box -->
+                <div class="input-card">
+                    <!-- Text Area -->
+                    <textarea 
+                        id="chatInput" 
+                        class="chat-textarea" 
+                        placeholder="Ask Onyx anything or specify your career goals..."
+                        rows="1"
+                    ></textarea>
+
+                    <!-- Action Bar with Buttons -->
+                    <div class="input-actions-bar">
+                        <div class="left-tools">
+                            <!-- Hidden File Input -->
+                            <input type="file" id="resumeFileInput" accept=".pdf,.docx,.txt" style="display: none;">
+                            
+                            <!-- Upload Resume Button -->
+                            <button type="button" class="tool-btn" id="triggerUploadBtn">
+                                <i data-lucide="upload"></i>
+                                <span>Upload Resume</span>
+                            </button>
+
+                            <!-- Add Position Button -->
+                            <button type="button" class="tool-btn" id="triggerPositionBtn">
+                                <i data-lucide="briefcase"></i>
+                                <span>Add Position</span>
+                            </button>
+                        </div>
+
+                        <div class="right-tools">
+                            <button type="button" class="send-btn" id="sendBtn" title="Send Request">
+                                <i data-lucide="arrow-up"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="input-footnote">
+                    Onyx utilizes sentence embeddings & multi-sector semantic matching. All requests persist to Neon PostgreSQL.
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Add Position Modal Dialog -->
+    <div class="modal-backdrop" id="positionModal" style="display: none;">
+        <div class="modal-card">
+            <div class="modal-header">
+                <h3>Specify Target Position</h3>
+                <button class="icon-btn" id="closePositionModal"><i data-lucide="x"></i></button>
+            </div>
+            <div class="modal-body">
+                <label for="positionInputText">Target Job Role or Title</label>
+                <input 
+                    type="text" 
+                    id="positionInputText" 
+                    placeholder="e.g. Senior Machine Learning Engineer, Backend Developer" 
+                    class="modal-text-input"
+                >
+                <div class="modal-hints">
+                    <span>Popular choices:</span>
+                    <button type="button" class="pill-hint">AI Engineer</button>
+                    <button type="button" class="pill-hint">Data Scientist</button>
+                    <button type="button" class="pill-hint">Full Stack Developer</button>
+                    <button type="button" class="pill-hint">Product Manager</button>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn-secondary" id="cancelPositionBtn">Cancel</button>
+                <button type="button" class="btn-primary" id="savePositionBtn">Set Position</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Application Script -->
+    <script src="/static/js/app.js"></script>
+</body>
+</html>
+
