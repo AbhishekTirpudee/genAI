@@ -1,0 +1,293 @@
+[
+  {
+    "part_number": "ESP32-WROOM-32",
+    "category": "Microcontrollers & Wireless",
+    "description": "Dual-core 32-bit MCU with Wi-Fi & BLE",
+    "specifications": {
+      "operating_voltage": "3.3V",
+      "key_specifications": "240MHz, 520KB SRAM, 4MB Flash, 36 GPIOs"
+    },
+    "applications": [
+      "IoT home automation",
+      "wireless sensors",
+      "wearable devices",
+      "audio streaming"
+    ],
+    "pricing": {
+      "qty_1": 3.85,
+      "qty_100": 2.95
+    },
+    "stock_status": "12450",
+    "page_number": 3
+  },
+  {
+    "part_number": "STM32F401RET6",
+    "category": "Microcontrollers",
+    "description": "High-performance ARM Cortex-M4 32-bit RISC core with FPU",
+    "specifications": {
+      "operating_voltage": "1.7V - 3.6V",
+      "key_specifications": "84MHz, 512KB Flash, 96KB SRAM, 50 GPIOs"
+    },
+    "applications": [
+      "Medical diagnostic monitors",
+      "industrial PLC",
+      "drones",
+      "motor control"
+    ],
+    "pricing": {
+      "qty_1": 5.2,
+      "qty_100": 3.9
+    },
+    "stock_status": "4200",
+    "page_number": 4
+  },
+  {
+    "part_number": "ATmega328P-PU",
+    "category": "Microcontrollers",
+    "description": "Low-power 8-bit AVR RISC microcontroller (Arduino Uno core)",
+    "specifications": {
+      "operating_voltage": "1.8V - 5.5V",
+      "key_specifications": "20MHz, 32KB Flash, 2KB SRAM, 1KB EEPROM, 23 GPIOs"
+    },
+    "applications": [
+      "DIY electronics",
+      "Arduino projects",
+      "educational robotics",
+      "simple controllers"
+    ],
+    "pricing": {
+      "qty_1": 2.15,
+      "qty_100": 1.65
+    },
+    "stock_status": "8900",
+    "page_number": 5
+  },
+  {
+    "part_number": "LM358N",
+    "category": "Analog & Op-Amps",
+    "description": "Dual low-power operational amplifier, single or split supply",
+    "specifications": {
+      "operating_voltage": "3.0V - 32V",
+      "key_specifications": "1.0MHz GBW, 500uA supply current, 2mV offset, DIP-8"
+    },
+    "applications": [
+      "Transducer amplifiers",
+      "active filters",
+      "DC gain blocks",
+      "voltage comparators"
+    ],
+    "pricing": {
+      "qty_1": 0.45,
+      "qty_100": 0.28
+    },
+    "stock_status": "45000",
+    "page_number": 6
+  },
+  {
+    "part_number": "NE555P",
+    "category": "Analog & Timers",
+    "description": "Precision timing oscillator circuit, astable/monostable",
+    "specifications": {
+      "operating_voltage": "4.5V - 16V",
+      "key_specifications": "Up to 500kHz, 200mA output drive, DIP-8"
+    },
+    "applications": [
+      "Pulse generation",
+      "sequential timers",
+      "PWM motor speed control",
+      "LED flashers"
+    ],
+    "pricing": {
+      "qty_1": 0.35,
+      "qty_100": 0.22
+    },
+    "stock_status": "38000",
+    "page_number": 7
+  },
+  {
+    "part_number": "AMS1117-3.3",
+    "category": "Power Regulators",
+    "description": "Low dropout (LDO) linear voltage regulator 3.3V fixed",
+    "specifications": {
+      "operating_voltage": "4.75V - 12V",
+      "key_specifications": "3.3V out, 1.0A max current, 1.1V dropout, SOT-223"
+    },
+    "applications": [
+      "5V to 3.3V step-down for ESP32/STM32",
+      "battery chargers",
+      "portable instruments"
+    ],
+    "pricing": {
+      "qty_1": 0.32,
+      "qty_100": 0.18
+    },
+    "stock_status": "62000",
+    "page_number": 8
+  },
+  {
+    "part_number": "LM7805CT",
+    "category": "Power Regulators",
+    "description": "Positive linear voltage regulator 5.0V fixed",
+    "specifications": {
+      "operating_voltage": "7.0V - 25V",
+      "key_specifications": "5.0V out, 1.5A max current, thermal overload protection, TO-220"
+    },
+    "applications": [
+      "5V TTL power supplies",
+      "Arduino DC inputs",
+      "on-card local regulation"
+    ],
+    "pricing": {
+      "qty_1": 0.65,
+      "qty_100": 0.42
+    },
+    "stock_status": "21500",
+    "page_number": 9
+  },
+  {
+    "part_number": "TPS54302DDCR",
+    "category": "Power Regulators",
+    "description": "3A synchronous step-down (Buck) DC-DC converter",
+    "specifications": {
+      "operating_voltage": "4.5V - 28V",
+      "key_specifications": "3.0A out, 400kHz switching, 95% efficiency, SOT-23-6"
+    },
+    "applications": [
+      "12V/24V distributed power systems",
+      "industrial PLCs",
+      "digital TV",
+      "motor drivers"
+    ],
+    "pricing": {
+      "qty_1": 1.45,
+      "qty_100": 0.98
+    },
+    "stock_status": "16000",
+    "page_number": 10
+  },
+  {
+    "part_number": "DHT22 / AM2302",
+    "category": "Sensors",
+    "description": "Digital relative humidity and temperature sensor",
+    "specifications": {
+      "operating_voltage": "3.3V - 6V",
+      "key_specifications": "0-100% RH (\u00b12%), -40 to +80\u00b0C (\u00b10.5\u00b0C), single-bus 1-wire"
+    },
+    "applications": [
+      "HVAC climate control",
+      "greenhouse monitoring",
+      "weather stations",
+      "server rooms"
+    ],
+    "pricing": {
+      "qty_1": 4.5,
+      "qty_100": 3.2
+    },
+    "stock_status": "3100",
+    "page_number": 11
+  },
+  {
+    "part_number": "MPU-6050",
+    "category": "Sensors",
+    "description": "6-axis MotionTracking (3-axis Gyro + 3-axis Accelerometer)",
+    "specifications": {
+      "operating_voltage": "2.375V - 3.46V",
+      "key_specifications": "\u00b12000 dps gyro, \u00b116g accel, onboard DMP, I2C, QFN-24"
+    },
+    "applications": [
+      "Drones",
+      "attitude stabilization",
+      "gesture control",
+      "robotics balancing"
+    ],
+    "pricing": {
+      "qty_1": 2.8,
+      "qty_100": 1.95
+    },
+    "stock_status": "7500",
+    "page_number": 12
+  },
+  {
+    "part_number": "BME280",
+    "category": "Sensors",
+    "description": "Combined digital pressure, humidity, and temperature sensor",
+    "specifications": {
+      "operating_voltage": "1.71V - 3.6V",
+      "key_specifications": "300-1100 hPa, -40 to +85\u00b0C, 0-100% RH, I2C/SPI, LGA-8"
+    },
+    "applications": [
+      "GPS altimeters",
+      "smartphone weather sensing",
+      "air flow meters",
+      "fitness trackers"
+    ],
+    "pricing": {
+      "qty_1": 4.9,
+      "qty_100": 3.6
+    },
+    "stock_status": "5600",
+    "page_number": 13
+  },
+  {
+    "part_number": "2N2222A",
+    "category": "Discrete Semiconductors",
+    "description": "NPN bipolar junction transistor for switching & amplification",
+    "specifications": {
+      "operating_voltage": "40V Vceo",
+      "key_specifications": "800mA continuous Ic, 300MHz ft, hFE 100-300, TO-92"
+    },
+    "applications": [
+      "Relay drivers",
+      "solenoid switches",
+      "microcontrollers GPIO buffers",
+      "audio preamps"
+    ],
+    "pricing": {
+      "qty_1": 0.15,
+      "qty_100": 0.06
+    },
+    "stock_status": "120000",
+    "page_number": 14
+  },
+  {
+    "part_number": "IRFZ44N",
+    "category": "Discrete Semiconductors",
+    "description": "55V Single N-Channel HEXFET Power MOSFET",
+    "specifications": {
+      "operating_voltage": "55V Vdss",
+      "key_specifications": "49A continuous Id, 17.5mOhm Rds(on), 94W, TO-220AB"
+    },
+    "applications": [
+      "DC motor H-bridges",
+      "speed controllers",
+      "SMPS power stages",
+      "battery disconnects"
+    ],
+    "pricing": {
+      "qty_1": 1.1,
+      "qty_100": 0.75
+    },
+    "stock_status": "18400",
+    "page_number": 15
+  },
+  {
+    "part_number": "1N4007",
+    "category": "Discrete Semiconductors",
+    "description": "General-purpose silicon rectifier diode 1000V 1A",
+    "specifications": {
+      "operating_voltage": "1000V Vrrm",
+      "key_specifications": "1.0A forward current, 30A surge, 1.1V drop, DO-41"
+    },
+    "applications": [
+      "Mains 50/60Hz AC-to-DC bridge rectifiers",
+      "flyback relay protection",
+      "polarity diode"
+    ],
+    "pricing": {
+      "qty_1": 0.08,
+      "qty_100": 0.03
+    },
+    "stock_status": "350000",
+    "page_number": 16
+  }
+]
